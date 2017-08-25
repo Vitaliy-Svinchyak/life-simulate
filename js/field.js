@@ -1,27 +1,30 @@
 class Field {
+
     constructor(field) {
         if (typeof field === 'string') {
             field = this.parseString(field);
         }
-        field[field.length - 2][field[0].length - 2] = empty;
 
+        field[field.length - 2][field[0].length - 2] = type.empty;
         this.field = field;
         this.textarea = document.querySelector('#field');
         this.colectiveMind = new CollectiveMind(field);
+
         this.detectAnimals();
         this.draw();
     }
 
     getCoveragePercent(second) {
+        return;
         let emptyFields = 0;
         let visitedFields = 0;
 
         for (let row of this.field) {
             for (let symbol of row) {
-                if (symbol === empty) {
+                if (symbol === type.empty) {
                     emptyFields++;
                 }
-                if (~[track, animal].indexOf(symbol)) {
+                if (~[type.track, type.animal].indexOf(symbol)) {
                     visitedFields++;
                 }
             }
@@ -29,6 +32,7 @@ class Field {
 
         const totalCount = emptyFields + visitedFields;
         const percent = Math.floor(visitedFields / totalCount * 100);
+
         console.log(`${percent}% - ${second} steps`);
     }
 
@@ -42,6 +46,7 @@ class Field {
                 field[row] = [];
                 continue;
             }
+
             field[row].push(symbol);
         }
 
@@ -55,9 +60,10 @@ class Field {
     detectAnimals() {
         let id = 0;
         this.animals = [];
+
         for (let y in this.field) {
             for (let x in this.field[y]) {
-                if (this.field[y][x] === animal) {
+                if (this.field[y][x] === type.animal) {
                     this.animals.push(new Animal(y, x, this.colectiveMind, id));
                 }
             }
@@ -68,7 +74,6 @@ class Field {
         let i = 0;
         let startInterval = setInterval(() => {
                 this.animals.map(a => a.step(this.field));
-
                 this.draw();
                 i++;
 
@@ -96,7 +101,7 @@ class Field {
         }
 
         for (let row of this.field) {
-            if (~row.indexOf(empty)) {
+            if (~row.indexOf(type.empty)) {
                 return true;
             }
         }

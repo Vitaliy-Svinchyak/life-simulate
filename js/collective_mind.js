@@ -10,7 +10,7 @@ class CollectiveMind {
     parseHistory() {
         for (let rowI in this.field) {
             for (let cellI in this.field[rowI]) {
-                if (this.field[rowI][cellI] === track) {
+                if (this.field[rowI][cellI] === type.track) {
                     this.stepsHistory[`${rowI}:${cellI}`] = true;
                 }
             }
@@ -30,9 +30,10 @@ class CollectiveMind {
         this.animal = animal;
         let filteredVariants = variants.filter(v => !this.stepsHistory[`${v.y}:${v.x}`]);
 
-        // if have empty fields nearby
+        // if have nearby empty fields
         if (filteredVariants.length) {
             variants = filteredVariants;
+            delete this.animal.target;
         } else {
             variants = this.filterVariantsByNearbyEmptyFields(variants);
         }
@@ -49,7 +50,9 @@ class CollectiveMind {
         if (variants.length === 1) {
             this.rememberCurrentPositionAsDead();
         }
+
         let selectedVariants = this.filterVariantsByDeadFields(variants);
+
         return this.buildRouteToNearbyField(selectedVariants);
     }
 
@@ -68,76 +71,36 @@ class CollectiveMind {
             return [];
         }
 
-        let founded = false;
         let routeVariant;
         let currentPositions = variants;
+
         currentPositions = currentPositions.map(p => {
             p.route = `${p.y}:${p.x}`;
             p.parent = {x: this.animal.x, y: this.animal.y};
 
             return p;
         });
-        let nextPositions = [];
         let bestRoute;
-        let t = this.animal.target;
 
-        if (!t || this.field[t.y][t.x] !== empty) {
-            this.usedFields = {};
-            while (founded !== true) {
-                for (let currPos of currentPositions) {
-                    let nextPositionsForCurrent = this.getVariantsToGo(currPos);
+        this.createTargetForAnimal(currentPositions);
 
-                    nextPositionsForCurrent = nextPositionsForCurrent.map(p => {
-                        p.route = `${currPos.route}->${p.y}:${p.x}`;
-                        p.parent = currPos;
-                        return p;
-                    });
-
-                    let goodPositions = nextPositionsForCurrent.filter(p => {
-                        return this.field[p.y][p.x] === empty;
-                    });
-
-                    if (goodPositions.length) {
-                        routeVariant = goodPositions[0];
-                        founded = true;
-                        break;
-                    }
-
-                    nextPositions = nextPositions.concat(nextPositionsForCurrent);
-                }
-
-                if (!nextPositions.length && !routeVariant) {
-                    this.animal.cantGo = true;
-                    return [];
-                }
-
-                currentPositions = nextPositions;
-                nextPositions = [];
-            }
-
-            if (routeVariant) {
-                this.animal.target = routeVariant;
-                bestRoute = routeVariant.route.split('->')[0];
-            }
-        } else {
+        if (this.animal.target) {
             routeVariant = this.animal.target;
-            let clonedRoute = JSON.parse(JSON.stringify(routeVariant));
-            const foundedDivider = clonedRoute.route.indexOf('->');
-
-            if (foundedDivider > -1) {
-                clonedRoute.route = clonedRoute.route.substr(foundedDivider + 2);
-                this.animal.target = clonedRoute;
-
-                bestRoute = routeVariant.route.split('->')[0];
-
-                if (clonedRoute.route.substr(clonedRoute.route.indexOf('->')).indexOf('->') === -1) {
-                    delete this.animal.target;
-                }
-            }
+            bestRoute = routeVariant.route.split('->')[0];
+        } else {
+            return [];
         }
 
-        if (!bestRoute) {
-            return [];
+        let clonedRouteVariant = JSON.parse(JSON.stringify(routeVariant));
+        const foundedDivider = clonedRouteVariant.route.indexOf('->');
+
+        if (foundedDivider > -1) {
+            clonedRouteVariant.route = clonedRouteVariant.route.substr(foundedDivider + 2);
+            this.animal.target = clonedRouteVariant;
+
+            if (clonedRouteVariant.route.substr(clonedRouteVariant.route.indexOf('->')).indexOf('->') === -1) {
+                delete this.animal.target;
+            }
         }
 
         bestRoute = bestRoute.split(':');
@@ -149,6 +112,48 @@ class CollectiveMind {
         ];
     }
 
+    createTargetForAnimal(currentPositions) {
+        let founded = false;
+        let routeVariant;
+        let nextPositions = [];
+        let t = this.animal.target;
+
+        if (t && this.field[t.y][t.x] === type.empty) {
+            return;
+        }
+
+        delete this.animal.target;
+        this.usedFields = {};
+
+        while (founded !== true) {
+            for (let currentPosition of currentPositions) {
+                let nextPositionsForCurrent = this.getVariantsToGo(currentPosition);
+                let goodPositions = nextPositionsForCurrent.filter(p => this.field[p.y][p.x] === type.empty);
+
+                if (goodPositions.length) {
+                    routeVariant = goodPositions[0];
+                    founded = true;
+                    break;
+                }
+
+                nextPositions = nextPositions.concat(nextPositionsForCurrent);
+            }
+
+            if (!nextPositions.length && !routeVariant) {
+                this.animal.cantGo = true;
+                return [];
+            }
+
+            currentPositions = nextPositions;
+            nextPositions = [];
+        }
+
+        if (routeVariant) {
+            delete routeVariant.parent;
+            this.animal.target = routeVariant;
+        }
+    }
+
     getVariantsToGo(position) {
         let variants = [];
         this.usedFields[`${position.y}:${position.x}`] = true;
@@ -158,7 +163,6 @@ class CollectiveMind {
                 continue;
             }
 
-
             for (let x = position.x - 1; x <= position.x + 1; x++) {
                 if (position.parent && position.parent.x === x && position.parent.y === y) {
                     continue;
@@ -166,10 +170,15 @@ class CollectiveMind {
 
                 if (
                     this.field[y][x]
-                    && this.field[y][x] !== wall
-                    && (x != position.x ^ y != position.y)
+                    && this.field[y][x] !== type.wall
+                    && (x !== position.x ^ y !== position.y)
                 ) {
-                    variants.push({x: x, y: y});
+                    variants.push({
+                        x: x,
+                        y: y,
+                        parent: position,
+                        route: `${position.route}->${y}:${x}`
+                    });
                 }
             }
         }
@@ -185,6 +194,6 @@ class CollectiveMind {
 
     rememberCurrentPositionAsDead() {
         const a = this.animal;
-        this.deadFields[`${a.y}:${a.x}`] = {x: a.x, y: a.y};
+        this.deadFields[`${a.y}:${a.x}`] = true;
     }
 }

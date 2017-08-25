@@ -16,37 +16,11 @@
 <script src="js/collective_mind.js"></script>
 <script src="js/animal.js"></script>
 <script src="js/field.js"></script>
+<script src="js/test.js"></script>
 
 <script>
-
-        let f = `■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
-■֍            ■           ■■■■  ■       ■        ֍■
-■■■ ■■■■■■■■■■           ■     ■■■               ■■
-■    ■ ■ ■■  ■■■■   ■     ■■   ■              ■   ■
-■     ■ ■       ■■■■■■■■ ■■■■    ■■               ■
-■■    ■■  ■  ■               ■■    ■■   ■      ■  ■
-■ ■     ■  ■■          ■■      ■■  ■■ ■  ■■■■     ■
-■■ ■■  ■   ■■ ■ ■■ ■       ■ ■       ■■■   ■   ■■ ■
-■ ■■  ■  ■  ■   ■     ■    ■    ■■ ■    ■■   ■    ■
-■         ■       ■  ■ ■    ■■  ■ ■   ■    ■      ■
-■ ■■ ■ ■  ■   ■ ■  ■     ■ ■ ■ ■  ■■         ■ ■  ■
-■  ■ ■ ■■  ■        ■  ■■      ■  ■          ■    ■
-■    ■■   ■ ■■ ■■    ■  ■   ■    ■    ■  ■■ ■■■ ■ ■
-■■  ■ ■         ■■ ■ ■           ■      ■   ■ ■■  ■
-■■■           ■■      ■     ■ ■ ■ ■■ ■  ■ ■■  ■  ■■
-■■   ■       ■  ■   ■    ■■■      ■■       ■■     ■
-■ ■              ■ ■             ■       ■      ■ ■
-■   ■ ■ ■            ■ ■ ■  ■   ■■■  ■■■    ■ ■■  ■
-■■■■■■■      ■         ■  ■               ■       ■
-■֍           ■■  ■■  ■     ■ ■     ■■ ■ ■    ■   ֍■
-■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■`;
-//        String.prototype.replaceAll = function(search, replacement) {
-//            var target = this;
-//            return target.replace(new RegExp(search, 'g'), replacement);
-//        };
-//        f = f.replaceAll(empty, track);
-        const field = new Field(f);
-    field.start();
+        window.gameField = new Field(field2);
+        window.gameField.start();
 </script>
 </body>
 </html>

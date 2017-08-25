@@ -11,6 +11,7 @@ class Animal {
         this.x = +x;
         this.id = id;
         this.cantGo = false;
+        this.target = null;
         this.energy = 20;
         this.previousSteps = {};
         this.collectiveMind = collectiveMind;
@@ -31,14 +32,18 @@ class Animal {
 
             if (Math.abs(this.y + this.x - toGo.y - toGo.x) > 1) {
                 console.log(JSON.stringify([this.y, this.x]), JSON.stringify([toGo.y, toGo.x]));
+                console.log(JSON.stringify(this.target));
                 console.log('WOW!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
-                // as;
+                this.cantGo = true;
+                field[this.y][this.x] = 'X';
+                return;
             }
-            field[this.y][this.x] = track;
+
+            field[this.y][this.x] = type.track;
             this.x = toGo.x;
             this.y = toGo.y;
             this.energy--;
-            field[this.y][this.x] = animal;
+            field[this.y][this.x] = type.animal;
         }
     }
 
@@ -84,8 +89,8 @@ class Animal {
             for (let x = this.x - 1; x <= this.x + 1; x++) {
                 if (
                     field[y][x]
-                    && field[y][x] !== wall
-                    && field[y][x] !== animal
+                    && field[y][x] !== type.wall
+                    && field[y][x] !== type.animal
                     && (x != this.x ^ y != this.y)
                 ) {
                     variants.push({x: x, y: y});
