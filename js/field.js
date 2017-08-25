@@ -5,17 +5,17 @@ class Field {
             field = this.parseString(field);
         }
 
-        field[field.length - 2][field[0].length - 2] = type.empty;
+        // field[field.length - 2][field[0].length - 2] = type.empty;
         this.field = field;
         this.textarea = document.querySelector('#field');
-        this.colectiveMind = new CollectiveMind(field);
+        this.colectiveMind = new CollectiveMind(this);
 
         this.detectAnimals();
         this.draw();
     }
 
     getCoveragePercent(second) {
-        return;
+        // return;
         let emptyFields = 0;
         let visitedFields = 0;
 
@@ -73,7 +73,9 @@ class Field {
     start() {
         let i = 0;
         let startInterval = setInterval(() => {
-                this.animals.map(a => a.step(this.field));
+                for (let animal of this.animals) {
+                    animal.step(this.field);
+                }
                 this.draw();
                 i++;
 
@@ -107,5 +109,14 @@ class Field {
         }
 
         return false;
+    }
+
+    drawRoute(routeVariant) {
+        let coordinates = routeVariant.route.split('->');
+        console.log(coordinates.length);
+        for (let coor of coordinates) {
+            let c = coor.split(':');
+            this.field[c[0]][c[1]] = type.route;
+        }
     }
 }

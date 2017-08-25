@@ -1,13 +1,16 @@
 class CollectiveMind {
     constructor(field) {
-        this.field = field;
-        this.stepsHistory = {};
+        this.field = field.field;
+        this.fieldClass = field;
         this.deadFields = {};
         this.usedFields = {};
         this.parseHistory();
     }
 
     parseHistory() {
+        this.stepsHistory = {};
+        return;
+
         for (let rowI in this.field) {
             for (let cellI in this.field[rowI]) {
                 if (this.field[rowI][cellI] === type.track) {
@@ -102,6 +105,7 @@ class CollectiveMind {
                 delete this.animal.target;
             }
         }
+        // this.fieldClass.drawRoute(routeVariant);
 
         bestRoute = bestRoute.split(':');
         return [
@@ -140,6 +144,7 @@ class CollectiveMind {
             }
 
             if (!nextPositions.length && !routeVariant) {
+                console.log('cant');
                 this.animal.cantGo = true;
                 return [];
             }
@@ -170,8 +175,8 @@ class CollectiveMind {
 
                 if (
                     this.field[y][x]
-                    && this.field[y][x] !== type.wall
                     && (x !== position.x ^ y !== position.y)
+                    && this.field[y][x] !== type.wall
                 ) {
                     variants.push({
                         x: x,

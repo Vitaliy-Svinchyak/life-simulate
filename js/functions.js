@@ -1,9 +1,11 @@
 const type = {
     wall: '■',
-    animal: '֍',
+    // animal: '֍',
+    animal: 'o',
     plant: '֏',
     empty: ' ',
-    track: 'o'
+    track: 'x',
+    route: 'o'
 };
 
 const speed = 30;
@@ -13,7 +15,6 @@ function getRandomInt(min, max) {
 }
 
 function generateField(rows, cells) {
-    let cellsCount = 0;
     let field = [];
     let item;
 
@@ -24,15 +25,19 @@ function generateField(rows, cells) {
             if (y === 0 || y === rows || x === 0 || x === cells) {
                 item = type.wall;
             } else {
-                item = getRandomInt(0, 3) ? type.empty : type.wall;
+                item = getRandomInt(0, 4) ? type.empty : type.wall;
             }
 
             field[y][x] = item;
-            cellsCount++;
         }
     }
 
     field[1][1] = type.animal;
+    // field[1][2] = type.animal;
+    // field[1][3] = type.animal;
+    field[1][field[0].length - 2] = type.animal;
+    field[field.length - 2][field[0].length - 2] = type.animal;
+    field[field.length - 2][1] = type.animal;
 
     return field;
 }

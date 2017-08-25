@@ -13,4 +13,8 @@ textarea {
     text-align: center;
     cursor: default;
     pointer-events: none;
+    /*line-height: 14px;*/
+    line-height: 7px;
+    letter-spacing: -1px;
+    resize: none;
 }

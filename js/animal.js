@@ -71,8 +71,15 @@ class Animal {
         if (variantsToGo.length) {
             variant = variantsToGo[getRandomInt(0, variantsToGo.length - 1)];
             const stepKey = `${this.y}:${this.x}`;
-            this.previousSteps[stepKey] = true;
-            this.collectiveMind.addStepToHistory(stepKey);
+
+            switch (this.strategy) {
+                case animalStrategy.OWN_HISTORY:
+                    this.previousSteps[stepKey] = true;
+                    break;
+                case animalStrategy.COLLECTIVE_MIND_HISTORY:
+                    this.collectiveMind.addStepToHistory(stepKey);
+                    break;
+            }
 
             return variant;
         }
