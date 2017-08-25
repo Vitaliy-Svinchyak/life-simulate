@@ -76,6 +76,7 @@ class Field {
                 for (let animal of this.animals) {
                     animal.step(this.field);
                 }
+
                 this.draw();
                 i++;
 
