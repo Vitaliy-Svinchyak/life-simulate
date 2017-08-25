@@ -1,0 +1,52 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  <title>Life</title>
+  <meta name="description" content="">
+  <!--<meta name="viewport" content="width=device-width, initial-scale=1">-->
+  <link rel="apple-touch-icon" href="icon.png">
+  <link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+<textarea name="field" id="field" readonly></textarea>
+
+<script src="js/functions.js"></script>
+<script src="js/collective_mind.js"></script>
+<script src="js/animal.js"></script>
+<script src="js/field.js"></script>
+
+<script>
+
+        let f = `■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+■֍            ■           ■■■■  ■       ■        ֍■
+■■■ ■■■■■■■■■■           ■     ■■■               ■■
+■    ■ ■ ■■  ■■■■   ■     ■■   ■              ■   ■
+■     ■ ■       ■■■■■■■■ ■■■■    ■■               ■
+■■    ■■  ■  ■               ■■    ■■   ■      ■  ■
+■ ■     ■  ■■          ■■      ■■  ■■ ■  ■■■■     ■
+■■ ■■  ■   ■■ ■ ■■ ■       ■ ■       ■■■   ■   ■■ ■
+■ ■■  ■  ■  ■   ■     ■    ■    ■■ ■    ■■   ■    ■
+■         ■       ■  ■ ■    ■■  ■ ■   ■    ■      ■
+■ ■■ ■ ■  ■   ■ ■  ■     ■ ■ ■ ■  ■■         ■ ■  ■
+■  ■ ■ ■■  ■        ■  ■■      ■  ■          ■    ■
+■    ■■   ■ ■■ ■■    ■  ■   ■    ■    ■  ■■ ■■■ ■ ■
+■■  ■ ■         ■■ ■ ■           ■      ■   ■ ■■  ■
+■■■           ■■      ■     ■ ■ ■ ■■ ■  ■ ■■  ■  ■■
+■■   ■       ■  ■   ■    ■■■      ■■       ■■     ■
+■ ■              ■ ■             ■       ■      ■ ■
+■   ■ ■ ■            ■ ■ ■  ■   ■■■  ■■■    ■ ■■  ■
+■■■■■■■      ■         ■  ■               ■       ■
+■֍           ■■  ■■  ■     ■ ■     ■■ ■ ■    ■   ֍■
+■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■`;
+//        String.prototype.replaceAll = function(search, replacement) {
+//            var target = this;
+//            return target.replace(new RegExp(search, 'g'), replacement);
+//        };
+//        f = f.replaceAll(empty, track);
+        const field = new Field(f);
+    field.start();
+</script>
+</body>
+</html>
