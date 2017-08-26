@@ -117,7 +117,6 @@ class Field {
 
     drawRoute(routeVariant) {
         let coordinates = routeVariant.route.split('->');
-        console.log(coordinates.length);
         for (let coor of coordinates) {
             let c = coor.split(':');
             this.field[c[0]][c[1]] = type.route;

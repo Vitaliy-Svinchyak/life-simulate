@@ -4,6 +4,7 @@ class CollectiveMind {
         this.fieldClass = field;
         this.deadFields = {};
         this.usedFields = {};
+        this.bookedFields = {};
         this.parseHistory();
     }
 
@@ -36,7 +37,7 @@ class CollectiveMind {
         // if have nearby empty fields
         if (filteredVariants.length) {
             variants = filteredVariants;
-            delete this.animal.target;
+            this.clearAnimalTarget();
         } else {
             variants = this.filterVariantsByNearbyEmptyFields(variants);
         }
@@ -75,7 +76,6 @@ class CollectiveMind {
 
     buildRouteToNearbyField(variants) {
         if (!variants.length) {
-            console.log('cant', this.animal.y, this.animal.x);
             return [];
         }
 
@@ -108,7 +108,7 @@ class CollectiveMind {
             this.animal.target = clonedRouteVariant;
 
             if (clonedRouteVariant.route.substr(clonedRouteVariant.route.indexOf('->')).indexOf('->') === -1) {
-                delete this.animal.target;
+                this.clearAnimalTarget();
             }
         }
         // this.fieldClass.drawRoute(routeVariant);
@@ -137,13 +137,15 @@ class CollectiveMind {
             }
         }
 
-        delete this.animal.target;
+        this.clearAnimalTarget();
         this.usedFields = {};
 
         while (founded !== true) {
             for (let currentPosition of currentPositions) {
                 let nextPositionsForCurrent = this.getVariantsToGo(currentPosition, buildRouteWithAnimalDetection);
-                let goodPositions = nextPositionsForCurrent.filter(p => this.field[p.y][p.x] === type.empty);
+                let goodPositions = nextPositionsForCurrent
+                    .filter(p => this.field[p.y][p.x] === type.empty)
+                    .filter(p => !this.bookedFields[`${p.y}:${p.x}`]);
 
                 if (goodPositions.length) {
                     routeVariant = goodPositions[0];
@@ -155,7 +157,6 @@ class CollectiveMind {
             }
 
             if (!nextPositions.length && !routeVariant) {
-                console.log('cant');
                 this.animal.cantGo = true;
                 return [];
             }
@@ -166,6 +167,7 @@ class CollectiveMind {
 
         if (routeVariant) {
             delete routeVariant.parent;
+            this.bookedFields[`${routeVariant.y}:${routeVariant.x}`] = true;
             this.animal.target = routeVariant;
         }
     }
@@ -228,6 +230,14 @@ class CollectiveMind {
         }
 
         return false;
+    }
+
+    clearAnimalTarget() {
+        let t = this.animal.target;
+        if(t) {
+            this.bookedFields[`${t.y}:${t.x}`] = false;
+            delete this.animal.target;
+        }
     }
 
     rememberCurrentPositionAsDead() {
