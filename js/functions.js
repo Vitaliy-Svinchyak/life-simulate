@@ -5,7 +5,7 @@ const type = {
     plant: '֏',
     empty: ' ',
     track: 'x',
-    route: 'o'
+    route: 'w'
 };
 
 const speed = 30;
@@ -33,7 +33,7 @@ function generateField(rows, cells) {
     }
 
     field[1][1] = type.animal;
-    field[1][2] = type.animal;
+    // field[1][2] = type.animal;
     // field[1][3] = type.animal;
     field[1][field[0].length - 2] = type.animal;
     field[field.length - 2][field[0].length - 2] = type.animal;

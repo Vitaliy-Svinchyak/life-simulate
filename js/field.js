@@ -5,9 +5,9 @@ class Field {
             field = this.parseString(field);
         }
 
-        field[1][field[0].length - 2] = type.empty;
-        field[field.length - 2][field[0].length - 2] = type.empty;
-        field[field.length - 2][1] = type.empty;
+        // field[1][field[0].length - 2] = type.empty;
+        // field[field.length - 2][field[0].length - 2] = type.empty;
+        // field[field.length - 2][1] = type.empty;
 
         this.field = field;
         this.textarea = document.querySelector('#field');
@@ -63,9 +63,11 @@ class Field {
     detectAnimals() {
         let id = 0;
         this.animals = [];
+        let rowsCount = this.field.length;
+        let cellsCount = this.field[0].length;
 
-        for (let y in this.field) {
-            for (let x in this.field[y]) {
+        for (let y = 0; y < rowsCount; y++) {
+            for (let x = 0; x < cellsCount; x++) {
                 if (this.field[y][x] === type.animal) {
                     this.animals.push(new Animal(y, x, this.colectiveMind, id));
                 }
@@ -117,8 +119,8 @@ class Field {
 
     drawRoute(routeVariant) {
         let coordinates = routeVariant.route.split('->');
-        for (let coor of coordinates) {
-            let c = coor.split(':');
+        for (let coordinate of coordinates) {
+            let c = coordinate.split(':');
             this.field[c[0]][c[1]] = type.route;
         }
     }

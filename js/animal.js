@@ -105,7 +105,7 @@ class Animal {
                     field[y][x]
                     && field[y][x] !== type.wall
                     && field[y][x] !== type.animal
-                    && (x != this.x ^ y != this.y)
+                    && (x !== this.x ^ y !== this.y)
                 ) {
                     variants.push({x: x, y: y});
                 }
