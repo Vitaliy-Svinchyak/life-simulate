@@ -9,7 +9,7 @@ class CollectiveMind {
 
     parseHistory() {
         this.stepsHistory = {};
-        return;
+        // return;
 
         for (let rowI in this.field) {
             for (let cellI in this.field[rowI]) {
@@ -53,10 +53,14 @@ class CollectiveMind {
         if (variants.length === 1) {
             this.rememberCurrentPositionAsDead();
         }
+        // variants = this.filterByOtherAnimals(variants);
 
         let selectedVariants = this.filterVariantsByDeadFields(variants);
+        if (selectedVariants.length) {
+            return this.buildRouteToNearbyField(selectedVariants);
+        }
 
-        return this.buildRouteToNearbyField(selectedVariants);
+        return this.buildRouteToNearbyField(variants);
     }
 
     filterVariantsByDeadFields(variants) {
@@ -71,6 +75,7 @@ class CollectiveMind {
 
     buildRouteToNearbyField(variants) {
         if (!variants.length) {
+            console.log('cant', this.animal.y, this.animal.x);
             return [];
         }
 
@@ -90,6 +95,7 @@ class CollectiveMind {
         if (this.animal.target) {
             routeVariant = this.animal.target;
             bestRoute = routeVariant.route.split('->')[0];
+            bestRoute = bestRoute.split(':');
         } else {
             return [];
         }
@@ -107,7 +113,7 @@ class CollectiveMind {
         }
         // this.fieldClass.drawRoute(routeVariant);
 
-        bestRoute = bestRoute.split(':');
+
         return [
             {
                 x: +bestRoute[1],
@@ -121,9 +127,14 @@ class CollectiveMind {
         let routeVariant;
         let nextPositions = [];
         let t = this.animal.target;
+        let buildRouteWithAnimalDetection = false;
 
         if (t && this.field[t.y][t.x] === type.empty) {
-            return;
+            buildRouteWithAnimalDetection = this.isConflict();
+
+            if (!buildRouteWithAnimalDetection) {
+                return;
+            }
         }
 
         delete this.animal.target;
@@ -131,7 +142,7 @@ class CollectiveMind {
 
         while (founded !== true) {
             for (let currentPosition of currentPositions) {
-                let nextPositionsForCurrent = this.getVariantsToGo(currentPosition);
+                let nextPositionsForCurrent = this.getVariantsToGo(currentPosition, buildRouteWithAnimalDetection);
                 let goodPositions = nextPositionsForCurrent.filter(p => this.field[p.y][p.x] === type.empty);
 
                 if (goodPositions.length) {
@@ -159,7 +170,7 @@ class CollectiveMind {
         }
     }
 
-    getVariantsToGo(position) {
+    getVariantsToGo(position, detectAnimals) {
         let variants = [];
         this.usedFields[`${position.y}:${position.x}`] = true;
 
@@ -178,6 +189,10 @@ class CollectiveMind {
                     && (x !== position.x ^ y !== position.y)
                     && this.field[y][x] !== type.wall
                 ) {
+                    if (detectAnimals && this.field[y][x] === type.animal) {
+                        continue;
+                    }
+
                     variants.push({
                         x: x,
                         y: y,
@@ -195,6 +210,24 @@ class CollectiveMind {
         }
 
         return variants;
+    }
+
+    isConflict() {
+        let routeVariant = this.animal.target;
+        let bestRoute = routeVariant.route.split('->')[0];
+        bestRoute = bestRoute.split(':');
+        bestRoute = {y: +bestRoute[0], x: +bestRoute[1]};
+
+        if (this.field[bestRoute.y][bestRoute.x] === type.animal) {
+            let adversary = this.fieldClass.detectAnimalByCoordinates(bestRoute);
+
+            if (!adversary.isPaused()) {
+                adversary.pause(1);
+                return true;
+            }
+        }
+
+        return false;
     }
 
     rememberCurrentPositionAsDead() {

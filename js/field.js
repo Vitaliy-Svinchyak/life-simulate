@@ -5,7 +5,10 @@ class Field {
             field = this.parseString(field);
         }
 
-        // field[field.length - 2][field[0].length - 2] = type.empty;
+        field[1][field[0].length - 2] = type.empty;
+        field[field.length - 2][field[0].length - 2] = type.empty;
+        field[field.length - 2][1] = type.empty;
+
         this.field = field;
         this.textarea = document.querySelector('#field');
         this.colectiveMind = new CollectiveMind(this);
@@ -15,7 +18,7 @@ class Field {
     }
 
     getCoveragePercent(second) {
-        // return;
+        return;
         let emptyFields = 0;
         let visitedFields = 0;
 
@@ -118,6 +121,14 @@ class Field {
         for (let coor of coordinates) {
             let c = coor.split(':');
             this.field[c[0]][c[1]] = type.route;
+        }
+    }
+
+    detectAnimalByCoordinates(coordinate) {
+        for (let animal of this.animals) {
+            if (animal.y === coordinate.y && animal.x === coordinate.x) {
+                return animal;
+            }
         }
     }
 }

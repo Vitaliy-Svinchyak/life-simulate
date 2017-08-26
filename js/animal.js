@@ -11,6 +11,7 @@ class Animal {
         this.x = +x;
         this.id = id;
         this.cantGo = false;
+        this.paused = 0;
         this.target = null;
         this.energy = 20;
         this.previousSteps = {};
@@ -22,7 +23,13 @@ class Animal {
             return;
         }
 
+        if (this.paused) {
+            this.paused--;
+            return;
+        }
+
         const variantsToGo = this.getVariantsToGo(field);
+
         if (variantsToGo.length) {
             const toGo = this.selectVariantTogo(variantsToGo);
 
@@ -106,5 +113,13 @@ class Animal {
         }
 
         return variants;
+    }
+
+    pause(steps) {
+        this.paused = steps;
+    }
+
+    isPaused() {
+        return this.paused > 0;
     }
 }
