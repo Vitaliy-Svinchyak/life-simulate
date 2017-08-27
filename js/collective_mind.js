@@ -13,7 +13,7 @@ class CollectiveMind {
      */
     parseHistory() {
         this.stepsHistory = {};
-        // return;
+        return;
         let rowsCount = this.field.length;
         let cellsCount = this.field[0].length;
 

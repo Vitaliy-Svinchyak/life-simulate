@@ -12,6 +12,7 @@ class Field {
         this.field = field;
         this.textarea = document.querySelector('#field');
         this.colectiveMind = new CollectiveMind(this);
+        this.cachedDrawResults = [];
 
         this.detectAnimals();
         this.draw();
@@ -57,7 +58,22 @@ class Field {
     }
 
     draw() {
-        this.textarea.value = this.field.map(v => v.join('')).join('\n');
+        console.time('draw');
+        let text = '';
+        let fieldLength = this.field.length;
+
+        for (let i = 0; i < fieldLength; i++) {
+            if (!this.cachedDrawResults[i]) {
+                this.cachedDrawResults[i] = this.field[i].join('');
+            } else if (this.changedRows[i]) {
+                this.cachedDrawResults[i] = this.field[i].join('');
+            }
+
+            text += this.cachedDrawResults[i] + '\n';
+        }
+
+        this.textarea.value = text;
+        console.timeEnd('draw');
     }
 
     detectAnimals() {
@@ -78,8 +94,10 @@ class Field {
     start() {
         let i = 0;
         let startInterval = setInterval(() => {
+                this.changedRows = {};
                 for (let animal of this.animals) {
-                    animal.step(this.field);
+                    let changedRowsByAnimal = animal.step(this.field);
+                    this.changedRows = Object.assign(this.changedRows, changedRowsByAnimal);
                 }
 
                 this.draw();

@@ -45,12 +45,16 @@ class Animal {
                 field[this.y][this.x] = 'X';
                 return;
             }
+            let changed = {};
+            changed[this.y] = true;
+            changed[toGo.y] = true;
 
             field[this.y][this.x] = type.track;
             this.x = toGo.x;
             this.y = toGo.y;
             this.energy--;
             field[this.y][this.x] = type.animal;
+            return changed;
         }
     }
 
@@ -71,7 +75,6 @@ class Animal {
                 break;
             case animalStrategy.COLLECTIVE_MIND_HISTORY:
                 variantsToGo = this.collectiveMind.getVariants(variantsToGo, this);
-
                 break;
         }
 

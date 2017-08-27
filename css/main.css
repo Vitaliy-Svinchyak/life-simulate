@@ -9,13 +9,13 @@ textarea {
     border: 0;
     height: 100%;
     width: 100%;
-    font-size: 200%;
-    /*font-size: 100%;*/
+    /*font-size: 200%;*/
+    font-size: 100%;
     text-align: center;
     cursor: default;
     pointer-events: none;
-    line-height: 14px;
-    /*line-height: 7px;*/
+    /*line-height: 14px;*/
+    line-height: 7px;
     letter-spacing: -1px;
     resize: none;
 }
