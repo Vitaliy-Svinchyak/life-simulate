@@ -172,12 +172,21 @@ class CollectiveMind {
             for (let currentPosition of currentPositions) {
                 let nextPositionsForCurrentPosition = this.getVariantsToGo(currentPosition, buildRouteWithAnimalDetection);
                 let goodPositions = nextPositionsForCurrentPosition
-                    .filter(p => this.field[p.y][p.x] === type.empty) // filter by emptiness
-                    .filter(p => !this.bookedFields[`${p.y}:${p.x}`]); // filter by booking
+                    .filter(p => this.field[p.y][p.x] === type.empty); // filter by emptiness
+
+                // filter by booking
+                let goodPositionsWithoutBooked = goodPositions.filter(p => !this.bookedFields[`${p.y}:${p.x}`]);
+
+                let rebookedRoute = this.pickUpFieldToTheNearestAnimal(goodPositionsWithoutBooked, goodPositions);
+                if (rebookedRoute) {
+                    routeVariant = rebookedRoute;
+                    founded = true;
+                    break;
+                }
 
                 // just taking first variant (in most cases it will be just 1 here)
-                if (goodPositions.length) {
-                    routeVariant = goodPositions[0];
+                if (goodPositionsWithoutBooked.length) {
+                    routeVariant = goodPositionsWithoutBooked[0];
                     founded = true;
                     break;
                 }
@@ -199,11 +208,41 @@ class CollectiveMind {
             // Because there is a big tree of hierarchy here, we don't want this useless object to use our memory
             delete routeVariant.parent;
 
-            this.bookedFields[`${routeVariant.y}:${routeVariant.x}`] = true;
+            this.bookedFields[`${routeVariant.y}:${routeVariant.x}`] = this.animal;
             this.animal.target = routeVariant;
         }
     }
 
+    pickUpFieldToTheNearestAnimal(goodPositionsWithoutBooked, goodPositions) {
+        if (goodPositionsWithoutBooked.length === goodPositions.length) {
+            return false;
+        }
+
+        let bookedFields = [];
+
+        for (let route of goodPositions) {
+            if (this.bookedFields[`${route.y}:${route.x}`]) {
+                bookedFields.push(route);
+            }
+        }
+
+        for (let bookedField of bookedFields) {
+            let currentAnimalRouteLength = bookedField.route.split('->').length;
+            bookedField.owner = this.bookedFields[`${bookedField.y}:${bookedField.x}`];
+            let ownerRouteLength = bookedField.owner.target.route.split('->').length;
+            bookedField.gain = ownerRouteLength - currentAnimalRouteLength;
+        }
+
+        bookedFields = bookedFields.sort((a, b) => b.gain - a.gain);
+
+        if (bookedFields[0].gain > 0) {
+            delete bookedFields[0].owner.target;
+            delete bookedFields[0].owner;
+            return bookedFields[0];
+        }
+
+        return false;
+    }
 
     /**
      * @param {{y,x, parent, route}} position

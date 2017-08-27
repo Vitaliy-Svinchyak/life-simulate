@@ -19,7 +19,6 @@ class Field {
     }
 
     getCoveragePercent(second) {
-        return;
         let emptyFields = 0;
         let visitedFields = 0;
 
@@ -36,7 +35,6 @@ class Field {
 
         const totalCount = emptyFields + visitedFields;
         const percent = Math.floor(visitedFields / totalCount * 100);
-
         console.log(`${percent}% - ${second} steps`);
     }
 
@@ -58,7 +56,6 @@ class Field {
     }
 
     draw() {
-        console.time('draw');
         let text = '';
         let fieldLength = this.field.length;
 
@@ -73,7 +70,6 @@ class Field {
         }
 
         this.textarea.value = text;
-        console.timeEnd('draw');
     }
 
     detectAnimals() {
@@ -97,11 +93,13 @@ class Field {
                 this.changedRows = {};
                 for (let animal of this.animals) {
                     let changedRowsByAnimal = animal.step(this.field);
+                    if (changedRowsByAnimal) {
+                        i++;
+                    }
                     this.changedRows = Object.assign(this.changedRows, changedRowsByAnimal);
                 }
 
                 this.draw();
-                i++;
 
                 if (!this.hasEmptyFields()) {
                     clearInterval(startInterval);
