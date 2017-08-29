@@ -3,6 +3,7 @@ class MapGenerator {
     constructor() {
         this.createdRooms = [];
         this.generated = false;
+        this.first = true;
     }
 
     empty(rows, cells) {
@@ -56,12 +57,12 @@ class MapGenerator {
 
     rooms(rows, cells) {
         this.minRoomSize = {x: 4, y: 4};
-        this.maxRoomSize = {x: 10, y: 10};
-        // this.field = this.empty(rows, cells);
+        this.maxRoomSize = {x: 8, y: 8};
         this.field = this.empty(rows, cells);
         this.fieldSize = {maxY: rows, maxX: cells};
+        console.time('rooms');
         this.drawRooms();
-
+        console.timeEnd('rooms');
         return this.field;
     }
 
@@ -69,22 +70,20 @@ class MapGenerator {
         this.cursorRectangle = {x: 0, y: 0};
         this.rawStart = {x: 0, y: 0};
 
-        let i = 0;
-        while (i < 150) {
-            let room = this.getRandomRoomSize();
+        while (!this.generated) {
+            const room = this.getRandomRoomSize();
             this.cursorRectangle = this.drawRoom(this.cursorRectangle, room);
 
             if (this.cursorRectangle.x === this.fieldSize.maxX) {
                 this.moveCursorToTheNewRow();
             }
-            i++;
         }
     }
 
     moveCursorToTheNewRow() {
         let roomWithMaxY = this.createdRooms[0];
 
-        for (let room of this.createdRooms) {
+        for (const room of this.createdRooms) {
             if (room.start.x === 0 && room.end.y >= roomWithMaxY.end.y) {
                 roomWithMaxY = room;
             }
@@ -92,12 +91,25 @@ class MapGenerator {
 
         this.cursorRectangle = {x: 0, y: roomWithMaxY.end.y};
         this.rawStart = JSON.parse(JSON.stringify(this.cursorRectangle));
+
+        if (this.rawStart.y === this.fieldSize.maxY) {
+            this.generated = true;
+        }
     }
 
     drawRoom(cursorRectangle, room) {
         const roomEndX = cursorRectangle.x + room.x;
         const startY = this.getStartRowForRoom(roomEndX);
-        const roomEndY = startY + room.y;
+        let roomEndY = startY + room.y;
+
+        if (roomEndY > this.fieldSize.maxY) {
+            roomEndY = this.fieldSize.maxY;
+        }
+
+        if (roomEndY + 1 === this.fieldSize.maxY) {
+            roomEndY = this.fieldSize.maxY;
+        }
+
         const occupiedCells = {};
 
         for (let y = startY; y <= roomEndY; y++) {
@@ -147,25 +159,22 @@ class MapGenerator {
 
     getStartRowForRoom(roomEndX) {
         let startY = this.cursorRectangle.y;
+        const startX = this.cursorRectangle.x;
         this.crossedRooms = [];
 
         if (this.rawStart.y !== 0) {
-            let coatingOfX = [];
+            let wallsInRange = [];
+
             // We must cling to the "lowest" room in our range
+
             for (const room of this.createdRooms) {
-                if (
-                    !((room.end.x >= this.cursorRectangle.x && coatingOfX[room.end.x])
-                    || (room.start.x <= roomEndX && coatingOfX[room.start.x]))
-                ) {
-                    continue;
-                }
-
-                coatingOfX = this.coatX(coatingOfX, room);
-
-                if (room.end.y < startY) {
-                    startY = room.end.y;
+                if ((room.start.x >= startX && room.start.x <= roomEndX) || (room.end.x >= startX && room.end.x <= roomEndX)) {
+                    wallsInRange = wallsInRange.concat(this.getWallsInRange(room, this.cursorRectangle.x, roomEndX));
                 }
             }
+
+            wallsInRange = this.deleteDuplications(wallsInRange);
+            startY = this.findMinY(wallsInRange);
 
             for (const room of this.createdRooms) {
                 if ((room.end.x >= this.cursorRectangle.x || room.start.x <= roomEndX) && room.end.y >= startY) {
@@ -177,12 +186,54 @@ class MapGenerator {
         return startY;
     }
 
-    coatX(coatingOfX, room) {
-        for (let x = this.cursorRectangle.x; x <= room.end.x; x++) {
-            coatingOfX[x] = true;
+    deleteDuplications(wallsInRange) {
+        const filtered = [];
+
+        for (const wall of wallsInRange) {
+            let deleteIt = false;
+            const wallCoordinates = wall.split(':');
+
+            for (const wallToCompare of wallsInRange) {
+                const wallToCompareCoordinates = wallToCompare.split(':');
+                if (+wallCoordinates[1] === +wallToCompareCoordinates[1] && +wallCoordinates[0] < +wallToCompareCoordinates[0]) {
+                    deleteIt = true;
+                }
+            }
+
+            if (!deleteIt) {
+                filtered.push(wall);
+            }
         }
 
-        return coatingOfX;
+        return filtered;
+    }
+
+    findMinY(wallsInRange) {
+        let minY = +wallsInRange[0].split(':')[0];
+
+        for (const wall of wallsInRange) {
+            const wallCoordinates = wall.split(':');
+
+            if (+wallCoordinates[0] < minY) {
+                minY = +wallCoordinates[0];
+            }
+        }
+
+        return minY;
+    }
+
+    getWallsInRange(room, startX, endX) {
+        const keys = Object.keys(room.occupiedCells);
+
+        const allCells = keys.filter(v => {
+            const xCoordinate = +v.split(':')[1];
+            return xCoordinate >= startX && xCoordinate <= endX;
+        });
+
+        return allCells.filter(v => {
+            const coordinates = v.split(':');
+            return allCells.indexOf((+coordinates[0] + 1) + ':' + coordinates[1]) === -1;
+        });
     }
 
     getRandomRoomSize() {
@@ -199,14 +250,6 @@ class MapGenerator {
 
         if (this.cursorRectangle.x + x === this.fieldSize.maxX - 1) {
             x++;
-        }
-
-        if (this.cursorRectangle.y + y === this.fieldSize.maxY - 1) {
-            y++;
-        }
-
-        if (this.cursorRectangle.x + x === this.maxRoomSize.x && this.cursorRectangle.y + y === this.maxRoomSize.y) {
-            this.generated = true;
         }
 
         return {
