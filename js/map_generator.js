@@ -3,7 +3,7 @@ class MapGenerator {
     constructor() {
         this.createdRooms = [];
         this.generated = false;
-        this.first = true;
+        this.minYOnRow = -1;
     }
 
     empty(rows, cells) {
@@ -56,14 +56,209 @@ class MapGenerator {
     }
 
     rooms(rows, cells) {
-        this.minRoomSize = {x: 4, y: 4};
-        this.maxRoomSize = {x: 8, y: 8};
+        this.minRoomSize = {x: 5, y: 5};
+        this.maxRoomSize = {x: 9, y: 9};
         this.field = this.empty(rows, cells);
         this.fieldSize = {maxY: rows, maxX: cells};
         console.time('rooms');
         this.drawRooms();
+        // this.clearFatWalls();
         console.timeEnd('rooms');
         return this.field;
+    }
+
+    clearIt(field) {
+        this.field = field;
+        this.clearFatWalls();
+        return this.field;
+    }
+
+    clearFatWalls() {
+        for (let y = 1; y < this.fieldSize.maxY; y++) {
+            xFor: for (let x = 1; x < this.fieldSize.maxX; x++) {
+                if (this.field[y][x] !== type.wall) {
+                    continue xFor;
+                }
+
+                if (this.canDelete(y, x)) {
+                    this.field[y][x] = type.animal;
+                }
+
+                // if (
+                //     this.isSideWall(y, x)
+                //     && this.isSideWall(y, x + 1)
+                //     && !this.isTopOrBottomWall(y, x)
+                //     && !this.isTopOrBottomWall(y, x + 1)
+                //     && this.field[y][x + 1] === type.wall) {
+                //     this.field[y][x] = type.animal;
+                // }
+                //
+                // if (this.isTopOrBottomWall(y, x)
+                //     && this.isTopOrBottomWall(y + 1, x)
+                //     && !this.isSideWall(y, x)
+                //     && !this.isSideWall(y + 1, x )
+                //     && this.field[y + 1][x] === type.wall) {
+                //     this.field[y][x] = type.empty;
+                // }
+            }
+        }
+    }
+
+    test() {
+        const falsevariants = [
+            // 3-conner
+            `010
+           011
+           010`,
+            `000
+           111
+           010`,
+            `010
+           110
+           010`,
+            `010
+           111
+           000`,
+            // full-3-conner
+            `011
+           011
+           000`,
+            `110
+           110
+           000`,
+            `000
+           110
+           110`,
+            `000
+           011
+           011`,
+            // 2-conner
+            `010
+           011
+           000`,
+            `000
+           011
+           010`,
+            `000
+           110
+           010`,
+            `010
+           110
+           000`,
+            // 4-conner
+            `010
+           111
+           010`,
+        ];
+
+        const trueVariants = [
+            // half-wall
+            `011
+            011
+            011`,
+            `111
+            111
+            000`,
+            `110
+            110
+            110`,
+            `000
+            111
+            111`,
+            // chair-wall
+            `011
+            011
+            001`,
+            `001
+            011
+            011`,
+            `110
+            110
+            100`,
+            `100
+            110
+            110`,
+            `100
+            111
+            111`,
+            `111
+            111
+            100`,
+            `100
+            111
+            111`,
+            `111
+            111
+            001`,
+            // tetris
+            `011
+            111
+            011`,
+            `111
+            111
+            010`,
+            `110
+            111
+            110`,
+            `010
+            111
+            111`,
+            //boot
+            `011
+            011
+            011`,
+            `111
+            111
+            000`,
+            `110
+            110
+            110`,
+            `000
+            111
+            111`,
+            // full
+            `111
+            111
+            111`,
+        ];
+    }
+
+    canDelete(y, x) {
+        return this.getMap(y, x) > 3;
+    }
+
+    getMap(y, x) {
+        let map = '';
+
+        for (let yCheck = y - 1; yCheck <= y + 1; yCheck++) {
+            for (let xCheck = x - 1; xCheck <= x + 1; xCheck++) {
+                if (this.field[yCheck][xCheck] === type.wall) {
+                    map += '1';
+                } else {
+                    map += '0';
+                }
+            }
+        }
+
+        return map;
+    }
+
+    isSideWall(y, x) {
+        for (let room of this.createdRooms) {
+            if ((room.start.x === x || room.end.x === x) && room.start.y < y && room.end.y > y) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    isTopOrBottomWall(y, x) {
+        for (let room of this.createdRooms) {
+            if ((room.start.y === y || room.end.y === y) && room.start.x < x && room.end.x > x) {
+                return true;
+            }
+        }
+        return false;
     }
 
     drawRooms() {
@@ -76,11 +271,16 @@ class MapGenerator {
 
             if (this.cursorRectangle.x === this.fieldSize.maxX) {
                 this.moveCursorToTheNewRow();
+                this.minYOnRow = -1;
             }
         }
     }
 
     moveCursorToTheNewRow() {
+        if (this.rawStart.y === this.fieldSize.maxY) {
+            this.generated = true;
+        }
+
         let roomWithMaxY = this.createdRooms[0];
 
         for (const room of this.createdRooms) {
@@ -91,15 +291,11 @@ class MapGenerator {
 
         this.cursorRectangle = {x: 0, y: roomWithMaxY.end.y};
         this.rawStart = JSON.parse(JSON.stringify(this.cursorRectangle));
-
-        if (this.rawStart.y === this.fieldSize.maxY) {
-            this.generated = true;
-        }
     }
 
     drawRoom(cursorRectangle, room) {
         const roomEndX = cursorRectangle.x + room.x;
-        const startY = this.getStartRowForRoom(roomEndX);
+        const startY = this.getStartRowForRoom(this.cursorRectangle.x, roomEndX);
         let roomEndY = startY + room.y;
 
         if (roomEndY > this.fieldSize.maxY) {
@@ -144,6 +340,11 @@ class MapGenerator {
             occupiedCells: occupiedCells
         });
 
+        if (this.minYOnRow > roomEndY || this.minYOnRow === -1) {
+            this.minYOnRow = roomEndY;
+        }
+
+
         return {y: startY, x: roomEndX};
     }
 
@@ -157,20 +358,23 @@ class MapGenerator {
         return false;
     }
 
-    getStartRowForRoom(roomEndX) {
+    getStartRowForRoom(startX, roomEndX) {
         let startY = this.cursorRectangle.y;
-        const startX = this.cursorRectangle.x;
         this.crossedRooms = [];
 
         if (this.rawStart.y !== 0) {
             let wallsInRange = [];
+            let targetCoating = roomEndX - startX;
 
             // We must cling to the "lowest" room in our range
-
-            for (const room of this.createdRooms) {
+            for (const room of this.createdRooms.reverse()) {
                 if ((room.start.x >= startX && room.start.x <= roomEndX) || (room.end.x >= startX && room.end.x <= roomEndX)) {
                     wallsInRange = wallsInRange.concat(this.getWallsInRange(room, this.cursorRectangle.x, roomEndX));
                 }
+
+                // if (wallsInRange.length >= targetCoating) {
+                //     break;
+                // }
             }
 
             wallsInRange = this.deleteDuplications(wallsInRange);

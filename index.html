@@ -22,8 +22,9 @@
     //    window.gameField = new Field(generateField(290, 450));
     //        window.gameField = new Field(generateField(125, 200));
     //        window.gameField = new Field(generateField(50, 50));
-    window.gameField = new Field(mapGenerator.rooms(55, 55));
-//    window.gameField.start();
+    const fieldAr = mapGenerator.rooms(55, 55);
+    window.gameField = new Field(fieldAr);
+    //    window.gameField.start();
 </script>
 </body>
 </html>

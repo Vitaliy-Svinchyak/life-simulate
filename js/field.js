@@ -60,9 +60,9 @@ class Field {
         let fieldLength = this.field.length;
 
         for (let i = 0; i < fieldLength; i++) {
-            if (!this.cachedDrawResults[i] || this.changedRows[i]) {
+            // if (!this.cachedDrawResults[i] || this.changedRows[i]) {
                 this.cachedDrawResults[i] = this.field[i].join('');
-            }
+            // }
             text += this.cachedDrawResults[i] + '\n';
         }
 
