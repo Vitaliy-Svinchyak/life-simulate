@@ -9,7 +9,7 @@ class CollectiveMind {
     }
 
     /**
-     * For test purposes
+     * For IsInListOfDeletion purposes
      */
     parseHistory() {
         this.stepsHistory = {};

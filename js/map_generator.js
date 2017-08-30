@@ -38,7 +38,7 @@ class MapGenerator {
                 if (y === 0 || y === rows || x === 0 || x === cells) {
                     item = type.wall;
                 } else {
-                    item = getRandomInt(0, 3) ? type.empty : type.wall;
+                    item = getRandomInt(0, 3) ? type.track : type.wall;
                 }
 
                 field[y][x] = item;
@@ -48,29 +48,185 @@ class MapGenerator {
         field[1][1] = type.animal;
         // field[1][2] = type.animal;
         // field[1][3] = type.animal;
-        field[1][field[0].length - 2] = type.animal;
-        field[field.length - 2][field[0].length - 2] = type.animal;
-        field[field.length - 2][1] = type.animal;
+        // field[1][field[0].length - 2] = type.animal;
+        // field[field.length - 2][field[0].length - 2] = type.animal;
+        field[field.length - 2][field[0].length - 2] = type.empty;
 
         return field;
     }
 
     rooms(rows, cells) {
-        this.minRoomSize = {x: 5, y: 5};
+        this.minRoomSize = {x: 4, y: 4};
         this.maxRoomSize = {x: 9, y: 9};
         this.field = this.empty(rows, cells);
         this.fieldSize = {maxY: rows, maxX: cells};
         console.time('rooms');
         this.drawRooms();
-        // this.clearFatWalls();
+        this.clearFatWalls();
+        this.drawDoors();
         console.timeEnd('rooms');
+        this.field[1][1] = type.animal;
+        this.field[1][this.field[0].length - 2] = type.animal;
+        this.field[this.field.length - 2][this.field[0].length - 2] = type.animal;
+        this.field[this.field.length - 2][1] = type.animal;
         return this.field;
     }
 
-    clearIt(field) {
-        this.field = field;
-        this.clearFatWalls();
-        return this.field;
+    drawDoors() {
+        this.roomsDescription = [];
+
+        let id = 0;
+        for (let y = 1; y < this.fieldSize.maxY; y++) {
+            for (let x = 1; x < this.fieldSize.maxX; x++) {
+                if (this.field[y][x] === type.wall) {
+                    continue;
+                }
+
+                const roomDescription = this.getRoomDescription(y, x);
+                if (roomDescription) {
+                    roomDescription.id = id;
+                    id++;
+                    this.roomsDescription.push(roomDescription);
+                }
+            }
+        }
+
+        this.connectedRooms = [];
+        this.roomsDescription[0].available = true;
+        this.notConnectedRooms = JSON.parse(JSON.stringify(this.roomsDescription));
+        this.notConnectedRoomsCount = this.roomsDescription.length - 1;
+
+        while (this.notConnectedRoomsCount !== 0) {
+            this.connectNotConnectedRooms();
+        }
+    }
+
+    connectNotConnectedRooms() {
+        for (const room of this.notConnectedRooms) {
+            const connectVariants = this.getConnectVariants(room);
+            const connectNumber = getRandomInt(1, connectVariants.length - 1);
+            const toConnect = connectVariants[connectNumber];
+
+            if (room.available) {
+                toConnect.available = true;
+                this.connectedRooms[toConnect.id] = toConnect;
+                this.connectedRooms[room.id] = room;
+            }
+
+            this.connectTwoRooms(room, toConnect);
+        }
+        this.recalCulateConnectionDiff();
+    }
+
+    recalCulateConnectionDiff() {
+        this.notConnectedRooms = this.notConnectedRooms.filter(r => !r.available);
+        this.notConnectedRoomsCount = this.notConnectedRooms.length;
+    }
+
+    connectTwoRooms(from, to) {
+        let jointWalls = [];
+        from.connected = from.connected || [];
+        to.connected = to.connected || [];
+
+        if (from.connected[to.id]) {
+            return;
+        }
+        from.connected[to.id] = true;
+        to.connected[from.id] = true;
+
+        for (const fromWall in from.wallList) {
+            if (to.wallList[fromWall]) {
+                jointWalls.push(fromWall);
+            }
+        }
+
+        let randomWall = jointWalls[getRandomInt(0, jointWalls.length - 1)];
+        let coordinates = randomWall.split(':');
+        coordinates = {y: +coordinates[0], x: +coordinates[1]};
+        this.field[coordinates.y][coordinates.x] = type.empty;
+    }
+
+    getConnectVariants(room) {
+        const roomWalls = Object.keys(room.wallList);
+        const variants = [];
+
+        for (const roomWall of roomWalls) {
+            for (const roomVariant of this.roomsDescription) {
+                if (roomVariant.id !== room.id && roomVariant.wallList[roomWall]) {
+                    variants.push(roomVariant);
+                }
+            }
+        }
+
+        return variants;
+    }
+
+    getRoomDescription(y, x) {
+        for (const room of this.roomsDescription) {
+            if (room.emptyList[`${y}:${x}`]) {
+                return false;
+            }
+        }
+
+        return this.generateRoomDescription(y, x);
+    }
+
+    generateRoomDescription(y, x) {
+        const room = {
+            emptyList: {},
+            wallList: {}
+        };
+        room.emptyList[`${y}:${x}`] = true;
+        let toCheck = [{y: y, x: x}];
+        let i = 0;
+
+        while (toCheck.length !== 0 && i < 250) {
+            let newToCheck = [];
+
+            for (const fieldToCheck of toCheck) {
+                i++;
+                y = fieldToCheck.y;
+                x = fieldToCheck.x;
+
+                if (this.field[y - 1][x] === type.wall) {
+                    room.wallList[`${y - 1}:${x}`] = true;
+                }
+
+                if (this.field[y][x + 1] === type.empty) {
+                    if (!room.emptyList[`${y}:${x + 1}`]) {
+                        newToCheck.push({y: y, x: x + 1});
+                    }
+
+                    room.emptyList[`${y}:${x + 1}`] = true;
+                } else {
+                    room.wallList[`${y}:${x + 1}`] = true;
+                }
+
+
+                if (this.field[y + 1][x] === type.empty) {
+                    if (!room.emptyList[`${y + 1}:${x}`]) {
+                        newToCheck.push({y: y + 1, x: x});
+                    }
+                    room.emptyList[`${y + 1}:${x}`] = true;
+                } else {
+                    room.wallList[`${y + 1}:${x}`] = true;
+                }
+
+                if (this.field[y][x - 1] === type.empty) {
+                    if (!room.emptyList[`${y}:${x - 1}`]) {
+                        newToCheck.push({y: y, x: x - 1});
+                    }
+                    room.emptyList[`${y}:${x - 1}`] = true;
+                } else {
+                    room.wallList[`${y}:${x - 1}`] = true;
+                }
+            }
+
+            toCheck = newToCheck;
+            newToCheck = [];
+        }
+
+        return room;
     }
 
     clearFatWalls() {
@@ -81,153 +237,69 @@ class MapGenerator {
                 }
 
                 if (this.canDelete(y, x)) {
-                    this.field[y][x] = type.animal;
+                    this.field[y][x] = type.empty;
                 }
-
-                // if (
-                //     this.isSideWall(y, x)
-                //     && this.isSideWall(y, x + 1)
-                //     && !this.isTopOrBottomWall(y, x)
-                //     && !this.isTopOrBottomWall(y, x + 1)
-                //     && this.field[y][x + 1] === type.wall) {
-                //     this.field[y][x] = type.animal;
-                // }
-                //
-                // if (this.isTopOrBottomWall(y, x)
-                //     && this.isTopOrBottomWall(y + 1, x)
-                //     && !this.isSideWall(y, x)
-                //     && !this.isSideWall(y + 1, x )
-                //     && this.field[y + 1][x] === type.wall) {
-                //     this.field[y][x] = type.empty;
-                // }
             }
         }
     }
 
-    test() {
-        const falsevariants = [
-            // 3-conner
-            `010
-           011
-           010`,
-            `000
-           111
-           010`,
-            `010
-           110
-           010`,
-            `010
-           111
-           000`,
-            // full-3-conner
-            `011
-           011
-           000`,
-            `110
-           110
-           000`,
-            `000
-           110
-           110`,
-            `000
-           011
-           011`,
-            // 2-conner
-            `010
-           011
-           000`,
-            `000
-           011
-           010`,
-            `000
-           110
-           010`,
-            `010
-           110
-           000`,
-            // 4-conner
-            `010
-           111
-           010`,
+    IsInListOfDeletion(map) {
+        const trueVariants = [
+            // corner
+            `001011000`,
+            `100110000`,
+            `000110100`,
+            `000011001`,
+            // half-wall
+            `011011011`,
+            `111111000`,
+            `110110110`,
+            `000111111`,
+            // chair-wall
+            `001011011`,
+            `100110110`,
+            `011011001`,
+            `110110100`,
+            `000011111`,
+            `000110111`,
+            `111011000`,
+            `111110000`,
+            // little tetris
+            `001011001`,
+            `100110100`,
+            `000010111`,
+            `111010000`,
+            //boot
+            `111011011`,
+            `111111100`,
+            `110110111`,
+            `001111111`,
+            `011011111`,
+            `111111001`,
+            `111110110`,
+            `100111111`,
+            // crakoz9bra
+            `111011111`,
+            `111111101`,
+            `111110111`,
+            `101111111`,
+            // stairs
+            `001011111`,
+            `100110111`,
+            `111110100`,
+            `111011001`,
+            // full
+            `111111111`,
         ];
 
-        const trueVariants = [
-            // half-wall
-            `011
-            011
-            011`,
-            `111
-            111
-            000`,
-            `110
-            110
-            110`,
-            `000
-            111
-            111`,
-            // chair-wall
-            `011
-            011
-            001`,
-            `001
-            011
-            011`,
-            `110
-            110
-            100`,
-            `100
-            110
-            110`,
-            `100
-            111
-            111`,
-            `111
-            111
-            100`,
-            `100
-            111
-            111`,
-            `111
-            111
-            001`,
-            // tetris
-            `011
-            111
-            011`,
-            `111
-            111
-            010`,
-            `110
-            111
-            110`,
-            `010
-            111
-            111`,
-            //boot
-            `011
-            011
-            011`,
-            `111
-            111
-            000`,
-            `110
-            110
-            110`,
-            `000
-            111
-            111`,
-            // full
-            `111
-            111
-            111`,
-        ];
+        return ~trueVariants.indexOf(map);
     }
 
     canDelete(y, x) {
-        return this.getMap(y, x) > 3;
+        return this.IsInListOfDeletion(this.getMapOfPointPosition(y, x));
     }
 
-    getMap(y, x) {
+    getMapOfPointPosition(y, x) {
         let map = '';
 
         for (let yCheck = y - 1; yCheck <= y + 1; yCheck++) {
@@ -241,24 +313,6 @@ class MapGenerator {
         }
 
         return map;
-    }
-
-    isSideWall(y, x) {
-        for (let room of this.createdRooms) {
-            if ((room.start.x === x || room.end.x === x) && room.start.y < y && room.end.y > y) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    isTopOrBottomWall(y, x) {
-        for (let room of this.createdRooms) {
-            if ((room.start.y === y || room.end.y === y) && room.start.x < x && room.end.x > x) {
-                return true;
-            }
-        }
-        return false;
     }
 
     drawRooms() {
