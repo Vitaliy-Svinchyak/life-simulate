@@ -91,46 +91,75 @@ class MapGenerator {
             }
         }
 
-        this.connectedRooms = [];
         this.roomsDescription[0].available = true;
         this.notConnectedRooms = JSON.parse(JSON.stringify(this.roomsDescription));
         this.notConnectedRoomsCount = this.roomsDescription.length - 1;
 
+        let i = 0;
         while (this.notConnectedRoomsCount !== 0) {
-            this.connectNotConnectedRooms();
+            this.connectNotConnectedRooms(i);
+            i++;
         }
     }
 
-    connectNotConnectedRooms() {
+    connectNotConnectedRooms(iteration) {
         for (const room of this.notConnectedRooms) {
             const connectVariants = this.getConnectVariants(room);
             const connectNumber = getRandomInt(1, connectVariants.length - 1);
-            const toConnect = connectVariants[connectNumber];
+            let toConnect = connectVariants[connectNumber];
 
-            if (room.available) {
+            if (room.available || toConnect.available) {
+                room.available = true;
                 toConnect.available = true;
-                this.connectedRooms[toConnect.id] = toConnect;
-                this.connectedRooms[room.id] = room;
             }
 
             this.connectTwoRooms(room, toConnect);
+            this.recalCulateConnectionDiff(room);
         }
-        this.recalCulateConnectionDiff();
     }
 
-    recalCulateConnectionDiff() {
-        this.notConnectedRooms = this.notConnectedRooms.filter(r => !r.available);
+    recalCulateConnectionDiff(connectedRoom) {
+        let toCheck = [connectedRoom];
+
+        while (toCheck.length !== 0) {
+            const newToCheck = [];
+
+            for (const roomId in connectedRoom.connected) {
+                const room = this.roomsDescription[roomId];
+
+                if (!room.connected || room.available) {
+                    continue;
+                }
+
+                room.available = true;
+
+                for (const roomIdRelation in room.connected) {
+                    const roomRelation = this.roomsDescription[roomIdRelation];
+
+                    if (roomRelation.available) {
+                        continue;
+                    }
+
+                    newToCheck.push(roomRelation);
+                }
+            }
+
+            toCheck = newToCheck;
+        }
+
+        this.notConnectedRooms = this.roomsDescription.filter(r => !r.available);
         this.notConnectedRoomsCount = this.notConnectedRooms.length;
     }
 
     connectTwoRooms(from, to) {
-        let jointWalls = [];
+        const jointWalls = [];
         from.connected = from.connected || [];
         to.connected = to.connected || [];
 
         if (from.connected[to.id]) {
             return;
         }
+
         from.connected[to.id] = true;
         to.connected[from.id] = true;
 
@@ -140,9 +169,14 @@ class MapGenerator {
             }
         }
 
-        let randomWall = jointWalls[getRandomInt(0, jointWalls.length - 1)];
+        const randomWall = jointWalls[getRandomInt(0, jointWalls.length - 1)];
         let coordinates = randomWall.split(':');
         coordinates = {y: +coordinates[0], x: +coordinates[1]};
+
+        if (coordinates.y === this.fieldSize.maxY || coordinates.y === 0 || coordinates.x === this.fieldSize.maxX || coordinates.x === 0) {
+            return;
+        }
+
         this.field[coordinates.y][coordinates.x] = type.empty;
     }
 
