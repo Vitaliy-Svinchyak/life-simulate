@@ -76,6 +76,7 @@ class MapGenerator {
         this.roomsDescription = [];
 
         let id = 0;
+        console.time('getRoomsDescription');
         for (let y = 1; y < this.fieldSize.maxY; y++) {
             for (let x = 1; x < this.fieldSize.maxX; x++) {
                 if (this.field[y][x] === type.wall) {
@@ -90,9 +91,10 @@ class MapGenerator {
                 }
             }
         }
+        console.timeEnd('getRoomsDescription');
 
         this.roomsDescription[0].available = true;
-        this.notConnectedRooms = JSON.parse(JSON.stringify(this.roomsDescription));
+        this.notConnectedRooms = this.roomsDescription;
         this.notConnectedRoomsCount = this.roomsDescription.length - 1;
 
         let i = 0;
@@ -395,6 +397,7 @@ class MapGenerator {
         }
 
         const occupiedCells = {};
+        const occupiedWalls = {};
 
         for (let y = startY; y <= roomEndY; y++) {
             for (let x = cursorRectangle.x; x <= roomEndX; x++) {
@@ -405,27 +408,32 @@ class MapGenerator {
         for (let y = startY; y <= roomEndY; y++) {
             if (!this.wallsIntersect(y, cursorRectangle.x)) {
                 this.field[y][cursorRectangle.x] = type.wall;
+                occupiedWalls[`${y}:${cursorRectangle.x}`] = true;
             }
 
             if (!this.wallsIntersect(y, roomEndX)) {
                 this.field[y][roomEndX] = type.wall;
+                occupiedWalls[`${y}:${roomEndX}`] = true;
             }
         }
 
         for (let x = cursorRectangle.x; x <= roomEndX; x++) {
             if (!this.wallsIntersect(startY, x)) {
                 this.field[startY][x] = type.wall;
+                occupiedWalls[`${startY}:${x}`] = true;
             }
 
             if (!this.wallsIntersect(roomEndY, x)) {
                 this.field[roomEndY][x] = type.wall;
+                occupiedWalls[`${roomEndY}:${x}`] = true;
             }
         }
 
         this.createdRooms.push({
             start: {x: cursorRectangle.x, y: startY},
             end: {x: roomEndX, y: roomEndY},
-            occupiedCells: occupiedCells
+            occupiedCells: occupiedCells,
+            occupiedWalls: occupiedWalls
         });
 
         if (this.minYOnRow > roomEndY || this.minYOnRow === -1) {
@@ -452,21 +460,19 @@ class MapGenerator {
 
         if (this.rawStart.y !== 0) {
             let wallsInRange = [];
-            let targetCoating = roomEndX - startX;
 
             // We must cling to the "lowest" room in our range
-            for (const room of this.createdRooms.reverse()) {
+            for (const room of this.createdRooms) {
                 if ((room.start.x >= startX && room.start.x <= roomEndX) || (room.end.x >= startX && room.end.x <= roomEndX)) {
                     wallsInRange = wallsInRange.concat(this.getWallsInRange(room, this.cursorRectangle.x, roomEndX));
                 }
-
-                // if (wallsInRange.length >= targetCoating) {
-                //     break;
-                // }
             }
 
             wallsInRange = this.deleteDuplications(wallsInRange);
-            startY = this.findMinY(wallsInRange);
+
+            if (wallsInRange.length) {
+                startY = this.findMinY(wallsInRange);
+            }
 
             for (const room of this.createdRooms) {
                 if ((room.end.x >= this.cursorRectangle.x || room.start.x <= roomEndX) && room.end.y >= startY) {
@@ -479,6 +485,7 @@ class MapGenerator {
     }
 
     deleteDuplications(wallsInRange) {
+        // console.log(wallsInRange);
         const filtered = [];
 
         for (const wall of wallsInRange) {
@@ -515,7 +522,7 @@ class MapGenerator {
     }
 
     getWallsInRange(room, startX, endX) {
-        const keys = Object.keys(room.occupiedCells);
+        const keys = Object.keys(room.occupiedWalls);
 
         const allCells = keys.filter(v => {
             const xCoordinate = +v.split(':')[1];

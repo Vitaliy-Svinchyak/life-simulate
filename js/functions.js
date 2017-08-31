@@ -8,7 +8,7 @@ const type = {
     route: 'w'
 };
 
-const speed = 10;
+const speed = 0;
 
 function getRandomInt(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
