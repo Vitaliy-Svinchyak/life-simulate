@@ -196,7 +196,7 @@ class CollectiveMind {
 
             // if no empty fields
             if (!nextPositions.length && !routeVariant) {
-                this.animal.cantGo = true;
+                this.animal.stop();
                 return;
             }
 
@@ -318,10 +318,10 @@ class CollectiveMind {
     }
 
     clearAnimalTarget() {
-        let t = this.animal.target;
+        const animalTarget = this.animal.target;
 
-        if (t) {
-            this.bookedFields[`${t.y}:${t.x}`] = false;
+        if (animalTarget) {
+            this.bookedFields[`${animalTarget.y}:${animalTarget.x}`] = false;
             delete this.animal.target;
         }
     }

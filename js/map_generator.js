@@ -38,7 +38,7 @@ class MapGenerator {
                 if (y === 0 || y === rows || x === 0 || x === cells) {
                     item = type.wall;
                 } else {
-                    item = getRandomInt(0, 3) ? type.track : type.wall;
+                    item = getRandomInt(0, 3) ? type.empty : type.wall;
                 }
 
                 field[y][x] = item;
@@ -48,9 +48,9 @@ class MapGenerator {
         field[1][1] = type.animal;
         // field[1][2] = type.animal;
         // field[1][3] = type.animal;
-        // field[1][field[0].length - 2] = type.animal;
-        // field[field.length - 2][field[0].length - 2] = type.animal;
-        field[field.length - 2][field[0].length - 2] = type.empty;
+        field[1][field[0].length - 2] = type.animal;
+        field[field.length - 2][field[0].length - 2] = type.animal;
+        field[field.length - 2][1] = type.animal;
 
         return field;
     }

@@ -4,7 +4,24 @@ const animalStrategy = {
     COLLECTIVE_MIND_HISTORY: 3
 };
 
+/**
+ * @property {int} strategy     - strategy of moving
+ * @property {int} y            - current row number of animal
+ * @property {int} x            - current column number of animal
+ * @property {int} id           - for uniqueness
+ * @property {boolean} cantGo   - if true animal will skip all his steps
+ * @property {int} paused       - how much steps need to wait untill can go
+ * @property {Target} target    - current target of animal
+ * @property {{}} previousSteps - history of steps
+ * @property {CollectiveMind} collectiveMind
+ */
 class Animal {
+    /**
+     * @param {int} y                   - current row number of animal
+     * @param {int} x                   - current column number of animal
+     * @param {CollectiveMind} collectiveMind
+     * @param {int} id                  - for uniqueness
+     */
     constructor(y, x, collectiveMind, id) {
         this.strategy = animalStrategy.COLLECTIVE_MIND_HISTORY;
         this.y = +y;
@@ -13,7 +30,6 @@ class Animal {
         this.cantGo = false;
         this.paused = 0;
         this.target = null;
-        this.energy = 20;
         this.previousSteps = {};
         this.collectiveMind = collectiveMind;
     }
@@ -38,21 +54,20 @@ class Animal {
             }
 
             if (Math.abs(this.y + this.x - toGo.y - toGo.x) > 1) {
-                console.log(JSON.stringify([this.y, this.x]), JSON.stringify([toGo.y, toGo.x]));
-                console.log(JSON.stringify(this.target));
-                console.log('WOW!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
-                this.cantGo = true;
+                console.error(JSON.stringify([this.y, this.x]), JSON.stringify([toGo.y, toGo.x]));
+                console.error(JSON.stringify(this.target));
+                console.error('WOW!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
+                this.stop();
                 field[this.y][this.x] = 'X';
                 return;
             }
-            let changed = {};
+            const changed = {};
             changed[this.y] = true;
             changed[toGo.y] = true;
 
             field[this.y][this.x] = type.track;
             this.x = toGo.x;
             this.y = toGo.y;
-            this.energy--;
             field[this.y][this.x] = type.animal;
             return changed;
         }
@@ -66,7 +81,7 @@ class Animal {
                 break;
             case animalStrategy.OWN_HISTORY:
                 if (variantsToGo.length > 1 && this.previousSteps) {
-                    let variantsToGoWithoutOldSteps = variantsToGo.filter(v => !this.previousSteps[`${v.y}:${v.x}`]);
+                    const variantsToGoWithoutOldSteps = variantsToGo.filter(v => !this.previousSteps[`${v.y}:${v.x}`]);
 
                     if (variantsToGoWithoutOldSteps.length) {
                         variantsToGo = variantsToGoWithoutOldSteps;
@@ -75,6 +90,10 @@ class Animal {
                 break;
             case animalStrategy.COLLECTIVE_MIND_HISTORY:
                 variantsToGo = this.collectiveMind.getVariants(variantsToGo, this);
+                break;
+            default:
+                console.error('Unknown strategy');
+                this.stop();
                 break;
         }
 
@@ -89,14 +108,27 @@ class Animal {
                 case animalStrategy.COLLECTIVE_MIND_HISTORY:
                     this.collectiveMind.addStepToHistory(stepKey);
                     break;
+                default:
+                    break;
             }
 
             return variant;
         }
     }
 
+    /**
+     * Returns an array of nearby points(radius = 1) where the current animal can go.
+     * Animal can't go to the point if:
+     *      - Point is a wall
+     *      - Point is an animal
+     * Animal can't walk diagonally. Only left, right, up, down
+     *
+     * @param {Field} field
+     *
+     * @returns {Point[]}
+     */
     getVariantsToGo(field) {
-        let variants = [];
+        const variants = [];
 
         for (let y = this.y - 1; y <= this.y + 1; y++) {
             if (!field[y]) {
@@ -108,6 +140,7 @@ class Animal {
                     field[y][x]
                     && field[y][x] !== type.wall
                     && field[y][x] !== type.animal
+                    // can't walk diagonally
                     && (x !== this.x ^ y !== this.y)
                 ) {
                     variants.push({x: x, y: y});
@@ -118,10 +151,21 @@ class Animal {
         return variants;
     }
 
+    /**
+     * Pause animal on some count of steps
+     * @param {int} steps
+     */
     pause(steps) {
         this.paused = steps;
     }
 
+    stop() {
+        this.cantGo = true;
+    }
+
+    /**
+     * @returns {boolean}
+     */
     isPaused() {
         return this.paused > 0;
     }
