@@ -44,7 +44,7 @@ class Animal {
             return null;
         }
 
-        const variantsToGo = this.getVariantsToGo(field);
+        const variantsToGo = this.getPossiblePointsToGo(field);
 
         if (variantsToGo.length) {
             const point = this.selectVariantTogo(variantsToGo);
@@ -154,7 +154,7 @@ class Animal {
      *
      * @returns {Point[]}
      */
-    getVariantsToGo(field) {
+    getPossiblePointsToGo(field) {
         const variants = [];
 
         for (let y = this.y - 1; y <= this.y + 1; y++) {
@@ -233,5 +233,9 @@ class Animal {
         }
 
         return true;
+    }
+
+    clearTarget() {
+        this.target = null;
     }
 }

@@ -1,15 +1,19 @@
+/**
+ * @property {Animal[]} animals    - all animals of the field
+ */
 class Field {
 
+    /**
+     * @param {[[Point]]} field
+     */
     constructor(field) {
+        let fieldArray = field;
+
         if (typeof field === 'string') {
-            field = this.parseString(field);
+            fieldArray = this.parseString(field);
         }
 
-        // field[1][field[0].length - 2] = type.empty;
-        // field[field.length - 2][field[0].length - 2] = type.empty;
-        // field[field.length - 2][1] = type.empty;
-
-        this.field = field;
+        this.field = fieldArray;
         this.textarea = document.querySelector('#field');
         this.colectiveMind = new CollectiveMind(this);
         this.cachedDrawResults = [];
@@ -38,6 +42,7 @@ class Field {
         console.log(`${percent}% - ${second} steps`);
     }
 
+    // todo try split speed
     parseString(string) {
         const field = [[]];
         let row = 0;
@@ -55,14 +60,15 @@ class Field {
         return field;
     }
 
+    // todo try canvas draw, must be faster on big fields
     draw() {
         let text = '';
         let fieldLength = this.field.length;
 
         for (let i = 0; i < fieldLength; i++) {
-            // if (!this.cachedDrawResults[i] || this.changedRows[i]) {
+            if (!this.cachedDrawResults[i] || this.changedRows[i]) {
                 this.cachedDrawResults[i] = this.field[i].join('');
-            // }
+            }
             text += this.cachedDrawResults[i] + '\n';
         }
 
@@ -85,17 +91,10 @@ class Field {
     }
 
     start() {
-        let i = 0;
-        let startInterval = setInterval(() => {
-                this.changedRows = {};
-                for (let animal of this.animals) {
-                    let changedRowsByAnimal = animal.step(this.field);
-                    if (changedRowsByAnimal) {
-                        i++;
-                    }
-                    this.changedRows = Object.assign(this.changedRows, changedRowsByAnimal);
-                }
-
+        let stepsCount = 0;
+        let startInterval = setInterval(
+            () => {
+                stepsCount = this.makeSteps(stepsCount);
                 this.draw();
 
                 if (!this.hasEmptyFields()) {
@@ -103,20 +102,48 @@ class Field {
                     console.log('STOP');
                 }
             },
-            speed);
+            stepSpeed
+        );
 
-        let infoInterval = setInterval(() => {
-                this.getCoveragePercent(i);
+        let infoInterval = setInterval(
+            () => {
+                this.getCoveragePercent(stepsCount);
 
                 if (!this.hasEmptyFields()) {
                     clearInterval(infoInterval);
                 }
             },
-            1000);
+            statisticSpeed
+        );
     }
 
+    /**
+     * Make step for all animals
+     *
+     * @param {int} stepsCount
+     *
+     * @return {int}
+     */
+    makeSteps(stepsCount) {
+        this.changedRows = {};
+
+        for (let animal of this.animals) {
+            let changedRowsByAnimal = animal.step(this.field);
+            if (changedRowsByAnimal) {
+                stepsCount++;
+            }
+            this.changedRows = Object.assign(this.changedRows, changedRowsByAnimal);
+        }
+
+        return stepsCount;
+    }
+
+    /**
+     * @return {boolean}
+     */
     hasEmptyFields() {
-        let canGo = this.animals.filter(a => !a.cantGo);
+        let canGo = this.animals.filter(a => a.canGo());
+
         if (!canGo.length) {
             return false;
         }
@@ -130,19 +157,30 @@ class Field {
         return false;
     }
 
+    /**
+     * @param {Target} routeVariant
+     */
     drawRoute(routeVariant) {
         let coordinates = routeVariant.route.split('->');
+
         for (let coordinate of coordinates) {
             let c = coordinate.split(':');
             this.field[c[0]][c[1]] = type.route;
         }
     }
 
+    /**
+     * @param {Point} coordinate
+     *
+     * @returns {Animal|null}
+     */
     detectAnimalByCoordinates(coordinate) {
         for (let animal of this.animals) {
             if (animal.y === coordinate.y && animal.x === coordinate.x) {
                 return animal;
             }
         }
+
+        return null;
     }
 }

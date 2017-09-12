@@ -31,8 +31,8 @@ class CollectiveMind {
     }
 
     /**
-     * @param {Array.<{y,x}>} variants
-     * @param {Animal}animal
+     * @param {Point[]} variants
+     * @param {Animal} animal
      * @returns {Point[]}
      */
     getVariants(variants, animal) {
@@ -53,8 +53,8 @@ class CollectiveMind {
 
     /**
      * Finds empty fields in bigger range and decides how to go there
-     * @param {Array.<{y,x}>}variants
-     * @returns {Array.<{y,x}>}
+     * @param {Point[]}variants
+     * @returns {Point[]}
      */
     filterVariantsByNearbyEmptyFields(variants) {
         let selectedVariants = this.filterVariantsByDeadFields(variants);
@@ -71,8 +71,8 @@ class CollectiveMind {
      *  If from the current position there is only one exit - current position is dead.
      *  If after filtering all exits from current position there is only one exit - current position is dead.
      *
-     * @param {Array.<{y,x}>} variants
-     * @returns {Array.<{y,x}>}
+     * @param {Point[]} variants
+     * @returns {Point[]}
      */
     filterVariantsByDeadFields(variants) {
         if (variants.length === 1) {
@@ -90,7 +90,7 @@ class CollectiveMind {
 
     /**
      * Returns a best variant to go, which will lead to the nearest empty field
-     * @param {Array.<{y,x}>} variants
+     * @param {Point[]} variants
      * @returns {*} next variant to go
      */
     buildRouteToNearbyField(variants) {
@@ -103,12 +103,7 @@ class CollectiveMind {
         let currentPositions = variants;
 
         // Generating route history for current variants
-        currentPositions = currentPositions.map(p => {
-            p.route = `${p.y}:${p.x}`;
-            p.parent = {x: this.animal.x, y: this.animal.y};
-
-            return p;
-        });
+        currentPositions = currentPositions.map(p => new Target(p.y, p.x, {x: this.animal.x, y: this.animal.y}));
 
         this.createTargetForAnimal(currentPositions);
 
@@ -144,7 +139,7 @@ class CollectiveMind {
 
     /**
      * Finds and builds route to the nearest not booked empty field
-     * @param {Array.<{y,x}>} currentPositions
+     * @param {Target[]} currentPositions
      * @returns {void}
      */
     createTargetForAnimal(currentPositions) {
@@ -170,7 +165,7 @@ class CollectiveMind {
         while (founded !== true) {
             // Checks all variants of all variants to go
             for (let currentPosition of currentPositions) {
-                let nextPositionsForCurrentPosition = this.getVariantsToGo(currentPosition, buildRouteWithAnimalDetection);
+                let nextPositionsForCurrentPosition = this.getPossibleTargetsToGo(currentPosition, buildRouteWithAnimalDetection);
                 let goodPositions = nextPositionsForCurrentPosition
                     .filter(p => this.field[p.y][p.x] === type.empty); // filter by emptiness
 
@@ -245,27 +240,22 @@ class CollectiveMind {
     }
 
     /**
-     * @param {{y,x, parent, route}} position
+     * @param {Target} target
      * @param {boolean} detectAnimals
-     * @returns {Array.<{y,x, parent, route}>}
+     *
+     * @returns {Target[]}
      */
-    getVariantsToGo(position, detectAnimals) {
-        let variants = [];
-        this.usedFields[`${position.y}:${position.x}`] = true;
+    getPossibleTargetsToGo(target, detectAnimals) {
+        let targets = [];
+        this.usedFields[`${target.y}:${target.x}`] = true;
 
-        for (let y = position.y - 1; y <= position.y + 1; y++) {
-            if (!this.field[y]) {
-                continue;
-            }
-
-            for (let x = position.x - 1; x <= position.x + 1; x++) {
-                if (position.parent && position.parent.x === x && position.parent.y === y) {
+        for (let y = target.y - 1; y <= target.y + 1; y++) {
+            for (let x = target.x - 1; x <= target.x + 1; x++) {
+                if (target.parentHasCoordinates(y, x)) {
                     continue;
                 }
 
-                if (
-                    this.field[y][x]
-                    && (x !== position.x ^ y !== position.y)
+                if ((x !== target.x ^ y !== target.y)
                     && this.field[y][x] !== type.wall
                 ) {
                     // If we are rebuilding route because of conflict with some animal
@@ -273,28 +263,24 @@ class CollectiveMind {
                         continue;
                     }
 
-                    variants.push({
-                        x: x,
-                        y: y,
-                        parent: position,
-                        route: `${position.route}->${y}:${x}`
-                    });
+                    targets.push(new Target(y, x, target));
                 }
             }
         }
 
         // A big optimization, we don't want to go where there was already one of our routes
-        variants = variants.filter(v => !this.usedFields[`${v.y}:${v.x}`]);
+        targets = targets.filter(v => !this.usedFields[`${v.y}:${v.x}`]);
 
-        for (let variant of variants) {
+        for (let variant of targets) {
             this.usedFields[`${variant.y}:${variant.x}`] = true;
         }
 
-        return variants;
+        return targets;
     }
 
     /**
      * Checks if somebody is on our next step
+     *
      * @returns {boolean}
      */
     isConflict() {
@@ -308,7 +294,7 @@ class CollectiveMind {
             let adversary = this.fieldClass.detectAnimalByCoordinates(bestRoute);
 
             // if yes, then pause it on 1 step and say that we need to recalculate route
-            if (!adversary.isPaused()) {
+            if (adversary && !adversary.isPaused()) {
                 adversary.pause(1);
                 return true;
             }
@@ -322,12 +308,11 @@ class CollectiveMind {
 
         if (animalTarget) {
             this.bookedFields[`${animalTarget.y}:${animalTarget.x}`] = false;
-            delete this.animal.target;
+            this.animal.clearTarget();
         }
     }
 
     rememberCurrentPositionAsDead() {
-        const a = this.animal;
-        this.deadFields[`${a.y}:${a.x}`] = true;
+        this.deadFields[`${this.animal.y}:${this.animal.x}`] = true;
     }
 }
