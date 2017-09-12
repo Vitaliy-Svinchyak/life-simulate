@@ -46,8 +46,6 @@ class MapGenerator {
         }
 
         field[1][1] = type.animal;
-        // field[1][2] = type.animal;
-        // field[1][3] = type.animal;
         field[1][field[0].length - 2] = type.animal;
         field[field.length - 2][field[0].length - 2] = type.animal;
         field[field.length - 2][1] = type.animal;
@@ -69,14 +67,21 @@ class MapGenerator {
         this.field[1][this.field[0].length - 2] = type.animal;
         this.field[this.field.length - 2][this.field[0].length - 2] = type.animal;
         this.field[this.field.length - 2][1] = type.animal;
+
+        this.clearMemory();
         return this.field;
+    }
+
+    clearMemory() {
+        this.createdRooms = null;
+        this.roomsDescription = null;
+        this.notConnectedRooms = null;
     }
 
     drawDoors() {
         this.roomsDescription = [];
 
         let id = 0;
-        console.time('getRoomsDescription');
         for (let y = 1; y < this.fieldSize.maxY; y++) {
             for (let x = 1; x < this.fieldSize.maxX; x++) {
                 if (this.field[y][x] === type.wall) {
@@ -91,7 +96,6 @@ class MapGenerator {
                 }
             }
         }
-        console.timeEnd('getRoomsDescription');
 
         this.roomsDescription[0].available = true;
         this.notConnectedRooms = this.roomsDescription;

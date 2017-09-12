@@ -5,5 +5,10 @@
  * @property {Target} parent
  */
 class Target {
-
+    constructor(y, x, route, parent) {
+        this.y = y;
+        this.x = x;
+        this.route = route;
+        this.parent = parent;
+    }
 }

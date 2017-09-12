@@ -10,7 +10,7 @@ const animalStrategy = {
  * @property {int} x            - current column number of animal
  * @property {int} id           - for uniqueness
  * @property {boolean} cantGo   - if true animal will skip all his steps
- * @property {int} paused       - how much steps need to wait untill can go
+ * @property {int} paused       - how much steps need to wait until can go
  * @property {Target} target    - current target of animal
  * @property {{}} previousSteps - history of steps
  * @property {CollectiveMind} collectiveMind
@@ -34,71 +34,63 @@ class Animal {
         this.collectiveMind = collectiveMind;
     }
 
+    /**
+     * @param {Field} field
+     *
+     * @returns {{}|null}
+     */
     step(field) {
-        if (this.cantGo) {
-            return;
-        }
-
-        if (this.paused) {
-            this.paused--;
-            return;
+        if (!this.canGo()) {
+            return null;
         }
 
         const variantsToGo = this.getVariantsToGo(field);
 
         if (variantsToGo.length) {
-            const toGo = this.selectVariantTogo(variantsToGo);
+            const point = this.selectVariantTogo(variantsToGo);
 
-            if (!toGo) {
-                return;
+            if (this.isValidPoint(point)) {
+                return this.goTo(point, field);
             }
-
-            if (Math.abs(this.y + this.x - toGo.y - toGo.x) > 1) {
-                console.error(JSON.stringify([this.y, this.x]), JSON.stringify([toGo.y, toGo.x]));
-                console.error(JSON.stringify(this.target));
-                console.error('WOW!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
-                this.stop();
-                field[this.y][this.x] = 'X';
-                return;
-            }
-            const changed = {};
-            changed[this.y] = true;
-            changed[toGo.y] = true;
-
-            field[this.y][this.x] = type.track;
-            this.x = toGo.x;
-            this.y = toGo.y;
-            field[this.y][this.x] = type.animal;
-            return changed;
         }
+
+        return null;
     }
 
+    /**
+     * Leaves a trace on its current position and moves to a new one
+     *
+     * @param {Point} point
+     * @param {Field} field
+     *
+     * @return {{}}
+     */
+    goTo(point, field) {
+        const changed = {};
+        changed[this.y] = true;
+        changed[point.y] = true;
+
+        field[this.y][this.x] = type.track;
+        this.x = point.x;
+        this.y = point.y;
+        field[this.y][this.x] = type.animal;
+
+        return changed;
+    }
+
+    /**
+     * Selects one of the points based on current move strategy
+     *
+     * @param {Point[]} variantsToGo
+     *
+     * @returns {Point}
+     */
     selectVariantTogo(variantsToGo) {
         let variant;
+        let filteredVariants = this.filterVariantsBasedOnStrategy(variantsToGo);
 
-        switch (this.strategy) {
-            case animalStrategy.RAND:
-                break;
-            case animalStrategy.OWN_HISTORY:
-                if (variantsToGo.length > 1 && this.previousSteps) {
-                    const variantsToGoWithoutOldSteps = variantsToGo.filter(v => !this.previousSteps[`${v.y}:${v.x}`]);
-
-                    if (variantsToGoWithoutOldSteps.length) {
-                        variantsToGo = variantsToGoWithoutOldSteps;
-                    }
-                }
-                break;
-            case animalStrategy.COLLECTIVE_MIND_HISTORY:
-                variantsToGo = this.collectiveMind.getVariants(variantsToGo, this);
-                break;
-            default:
-                console.error('Unknown strategy');
-                this.stop();
-                break;
-        }
-
-        if (variantsToGo.length) {
-            variant = variantsToGo[getRandomInt(0, variantsToGo.length - 1)];
+        if (filteredVariants.length) {
+            variant = filteredVariants[getRandomInt(0, filteredVariants.length - 1)];
             const stepKey = `${this.y}:${this.x}`;
 
             switch (this.strategy) {
@@ -111,11 +103,46 @@ class Animal {
                 default:
                     break;
             }
-
-            return variant;
         }
+
+        return variant;
     }
 
+    /**
+     * Filters points based on current move strategy
+     *
+     * @param {Point[]} variantsToGo
+     *
+     * @return {Point[]}
+     */
+    filterVariantsBasedOnStrategy(variantsToGo) {
+        let filteredVariants = variantsToGo;
+
+        switch (this.strategy) {
+            case animalStrategy.RAND:
+                break;
+            case animalStrategy.OWN_HISTORY:
+                if (variantsToGo.length > 1 && this.previousSteps) {
+                    const variantsToGoWithoutOldSteps = variantsToGo.filter(v => !this.previousSteps[`${v.y}:${v.x}`]);
+
+                    if (variantsToGoWithoutOldSteps.length) {
+                        filteredVariants = variantsToGoWithoutOldSteps;
+                    }
+                }
+                break;
+            case animalStrategy.COLLECTIVE_MIND_HISTORY:
+                filteredVariants = this.collectiveMind.getVariants(variantsToGo, this);
+                break;
+            default:
+                console.error('Unknown strategy');
+                this.stop();
+                break;
+        }
+
+        return filteredVariants;
+    }
+
+    //noinspection FunctionWithMultipleLoopsJS
     /**
      * Returns an array of nearby points(radius = 1) where the current animal can go.
      * Animal can't go to the point if:
@@ -131,14 +158,8 @@ class Animal {
         const variants = [];
 
         for (let y = this.y - 1; y <= this.y + 1; y++) {
-            if (!field[y]) {
-                continue;
-            }
-
             for (let x = this.x - 1; x <= this.x + 1; x++) {
-                if (
-                    field[y][x]
-                    && field[y][x] !== type.wall
+                if (field[y][x] !== type.wall
                     && field[y][x] !== type.animal
                     // can't walk diagonally
                     && (x !== this.x ^ y !== this.y)
@@ -152,13 +173,33 @@ class Animal {
     }
 
     /**
+     * @returns {boolean}
+     */
+    canGo() {
+        if (this.cantGo) {
+            return false;
+        }
+
+        if (this.paused) {
+            this.paused--;
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
      * Pause animal on some count of steps
+     *
      * @param {int} steps
      */
     pause(steps) {
         this.paused = steps;
     }
 
+    /**
+     * Stop current animal for all future steps
+     */
     stop() {
         this.cantGo = true;
     }
@@ -168,5 +209,29 @@ class Animal {
      */
     isPaused() {
         return this.paused > 0;
+    }
+
+    /**
+     * Checks if point exists and is not a teleport (in reach)
+     *
+     * @param {Point} point
+     *
+     * @returns {boolean}
+     */
+    isValidPoint(point) {
+        if (!point) {
+            return false;
+        }
+
+        if (Math.abs(this.y + this.x - point.y - point.x) > 1) {
+            console.error(JSON.stringify([this.y, this.x]), JSON.stringify([point.y, point.x]));
+            console.error(JSON.stringify(this.target));
+            console.error('WOW!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
+            this.stop();
+
+            return false;
+        }
+
+        return true;
     }
 }

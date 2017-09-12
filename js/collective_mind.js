@@ -33,7 +33,7 @@ class CollectiveMind {
     /**
      * @param {Array.<{y,x}>} variants
      * @param {Animal}animal
-     * @returns {Array.<{y,x}>}
+     * @returns {Point[]}
      */
     getVariants(variants, animal) {
         this.animal = animal;
