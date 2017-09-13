@@ -53,6 +53,7 @@ class Animal {
                 return this.goTo(point, field);
             }
         }
+        this.stop();
 
         return null;
     }
@@ -227,7 +228,6 @@ class Animal {
             console.error(JSON.stringify([this.y, this.x]), JSON.stringify([point.y, point.x]));
             console.error(JSON.stringify(this.target));
             console.error('WOW!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
-            this.stop();
 
             return false;
         }

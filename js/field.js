@@ -1,10 +1,14 @@
 /**
- * @property {Animal[]} animals    - all animals of the field
+ * @property {Animal[]} animals                 - all animals of the field
+ * @property {CollectiveMind} colectiveMind
+ * @property {HTMLTextAreaElement} textarea     - where we draw everything
+ * @property {[]} cachedDrawResults
+ * @property {[[Point]]} field
  */
 class Field {
 
     /**
-     * @param {[[Point]]} field
+     * @param {[[Point]]|string} field
      */
     constructor(field) {
         let fieldArray = field;
@@ -18,19 +22,21 @@ class Field {
         this.colectiveMind = new CollectiveMind(this);
         this.cachedDrawResults = [];
 
+        this.detectFieldSize();
         this.detectAnimals();
         this.draw();
     }
 
-    getCoveragePercent(second) {
+    getCoveragePercent(steps) {
         let emptyFields = 0;
         let visitedFields = 0;
 
-        for (let row of this.field) {
-            for (let symbol of row) {
+        for (const row of this.field) {
+            for (const symbol of row) {
                 if (symbol === type.empty) {
                     emptyFields++;
                 }
+
                 if (~[type.track, type.animal].indexOf(symbol)) {
                     visitedFields++;
                 }
@@ -39,33 +45,28 @@ class Field {
 
         const totalCount = emptyFields + visitedFields;
         const percent = Math.floor(visitedFields / totalCount * 100);
-        console.log(`${percent}% - ${second} steps`);
+
+        console.info(`${percent}% - ${steps} steps`);
     }
 
-    // todo try split speed
+    /**
+     * Parses string representation of field (for simulating purposes)
+     *
+     * @param {string} string
+     *
+     * @returns {[*]}
+     */
     parseString(string) {
-        const field = [[]];
-        let row = 0;
+        const rows = string.split('\n');
 
-        for (let symbol of string) {
-            if (symbol === '\n') {
-                row++;
-                field[row] = [];
-                continue;
-            }
-
-            field[row].push(symbol);
-        }
-
-        return field;
+        return rows.map(s => s.split(''));
     }
 
     // todo try canvas draw, must be faster on big fields
     draw() {
         let text = '';
-        let fieldLength = this.field.length;
 
-        for (let i = 0; i < fieldLength; i++) {
+        for (let i = 0; i < this.fieldSize.rows; i++) {
             if (!this.cachedDrawResults[i] || this.changedRows[i]) {
                 this.cachedDrawResults[i] = this.field[i].join('');
             }
@@ -75,37 +76,44 @@ class Field {
         this.textarea.value = text;
     }
 
+    /**
+     * Find all animals on the field and create objects for them
+     */
     detectAnimals() {
         let id = 0;
         this.animals = [];
-        let rowsCount = this.field.length;
-        let cellsCount = this.field[0].length;
+        console.time('detectAnimals');
 
-        for (let y = 0; y < rowsCount; y++) {
-            for (let x = 0; x < cellsCount; x++) {
+        for (let y = 0; y < this.fieldSize.rows; y++) {
+            for (let x = 0; x < this.fieldSize.cells; x++) {
                 if (this.field[y][x] === type.animal) {
                     this.animals.push(new Animal(y, x, this.colectiveMind, id));
+                    id++;
                 }
             }
         }
+        console.timeEnd('detectAnimals');
     }
 
+    /**
+     * Start the game and statistic Interval
+     */
     start() {
         let stepsCount = 0;
-        let startInterval = setInterval(
+        const startInterval = setInterval(
             () => {
                 stepsCount = this.makeSteps(stepsCount);
                 this.draw();
 
                 if (!this.hasEmptyFields()) {
                     clearInterval(startInterval);
-                    console.log('STOP');
+                    console.info('STOP');
                 }
             },
             stepSpeed
         );
 
-        let infoInterval = setInterval(
+        const infoInterval = setInterval(
             () => {
                 this.getCoveragePercent(stepsCount);
 
@@ -127,8 +135,9 @@ class Field {
     makeSteps(stepsCount) {
         this.changedRows = {};
 
-        for (let animal of this.animals) {
-            let changedRowsByAnimal = animal.step(this.field);
+        for (const animal of this.animals) {
+            const changedRowsByAnimal = animal.step(this.field);
+
             if (changedRowsByAnimal) {
                 stepsCount++;
             }
@@ -142,13 +151,13 @@ class Field {
      * @return {boolean}
      */
     hasEmptyFields() {
-        let canGo = this.animals.filter(a => a.canGo());
+        const canGo = this.animals.filter(a => a.canGo());
 
         if (!canGo.length) {
             return false;
         }
 
-        for (let row of this.field) {
+        for (const row of this.field) {
             if (~row.indexOf(type.empty)) {
                 return true;
             }
@@ -161,11 +170,10 @@ class Field {
      * @param {Target} routeVariant
      */
     drawRoute(routeVariant) {
-        let coordinates = routeVariant.route.split('->');
+        const points = routeVariant.getRouteArray();
 
-        for (let coordinate of coordinates) {
-            let c = coordinate.split(':');
-            this.field[c[0]][c[1]] = type.route;
+        for (const point of points) {
+            this.field[point.y][point.x] = type.route;
         }
     }
 
@@ -175,12 +183,19 @@ class Field {
      * @returns {Animal|null}
      */
     detectAnimalByCoordinates(coordinate) {
-        for (let animal of this.animals) {
+        for (const animal of this.animals) {
             if (animal.y === coordinate.y && animal.x === coordinate.x) {
                 return animal;
             }
         }
 
         return null;
+    }
+
+    detectFieldSize() {
+        this.fieldSize = {
+            rows: this.field.length,
+            cells: this.field[0].length,
+        };
     }
 }

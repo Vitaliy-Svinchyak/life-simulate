@@ -8,7 +8,7 @@ class Target extends Point {
     /**
      * @param {int} y           - target row
      * @param {int} x           - target column
-     * @param {Target} parent   - target from which current is built
+     * @param {Target|Point|{x,y}} parent   - target from which current is built
      */
     constructor(y, x, parent) {
         super(y, x);
@@ -33,5 +33,14 @@ class Target extends Point {
      */
     parentHasCoordinates(y, x) {
         return this.parent && this.parent.x === x && this.parent.y === y;
+    }
+
+    /**
+     * @returns {Point[]}
+     */
+    getRouteArray() {
+        const points = this.route.split('->');
+
+        return points.map(p => new Point(p[0], p[1]));
     }
 }
