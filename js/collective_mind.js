@@ -98,49 +98,34 @@ class CollectiveMind {
             return [];
         }
 
-        let bestRoute;
+        let nextStep;
         let routeVariant;
         let currentPositions = variants;
 
         // Generating route history for current variants
         currentPositions = currentPositions.map(p => new Target(p.y, p.x, {x: this.animal.x, y: this.animal.y}));
-
         this.createTargetForAnimal(currentPositions);
 
         if (this.animal.target) {
             routeVariant = this.animal.target;
-            bestRoute = routeVariant.route.split('->')[0];
-            bestRoute = bestRoute.split(':');
+            nextStep = this.animal.target.getNextStep();
         } else {
             return [];
         }
 
-        const clonedRouteVariant = JSON.parse(JSON.stringify(routeVariant));
-        const foundedDivider = clonedRouteVariant.route.indexOf('->');
+        routeVariant.afterStep();
 
-        // delete our next step from our route
-        if (foundedDivider > -1) {
-            clonedRouteVariant.route = clonedRouteVariant.route.substr(foundedDivider + 2);
-            this.animal.target = clonedRouteVariant;
-
-            if (clonedRouteVariant.route.substr(clonedRouteVariant.route.indexOf('->')).indexOf('->') === -1) {
-                this.clearAnimalTarget();
-            }
+        if (routeVariant.isPenultimateRun()) {
+            this.clearAnimalTarget();
         }
-        // this.fieldClass.drawRoute(routeVariant);
 
-        return [
-            {
-                x: +bestRoute[1],
-                y: +bestRoute[0],
-            }
-        ];
+        return [nextStep];
     }
 
     /**
      * Finds and builds route to the nearest not booked empty field
      *
-     * @param {Target[]} currentPositions
+     * @param {Target[]|Point[]} currentPositions
      *
      * @returns {void}
      */
@@ -248,16 +233,14 @@ class CollectiveMind {
      * @returns {Target[]}
      */
     getPossibleTargetsToGo(target, detectAnimals) {
+        /** @type Target[] */
         let targets = [];
         this.usedFields[Point.getKeyExternally(target.y, target.x)] = true;
 
         for (let y = target.y - 1; y <= target.y + 1; y++) {
             for (let x = target.x - 1; x <= target.x + 1; x++) {
-                if (target.parentHasCoordinates(y, x)) {
-                    continue;
-                }
-
-                if ((x !== target.x ^ y !== target.y)
+                if (
+                    (x !== target.x ^ y !== target.y)
                     && this.field[y][x] !== type.wall
                 ) {
                     // If we are rebuilding route because of conflict with some animal
@@ -286,14 +269,11 @@ class CollectiveMind {
      * @returns {boolean}
      */
     isConflict() {
-        const routeVariant = this.animal.target;
-        let bestRoute = routeVariant.route.split('->')[0];
-        bestRoute = bestRoute.split(':');
-        bestRoute = {y: +bestRoute[0], x: +bestRoute[1]};
+        const nextStep = this.animal.target.getNextStep();
 
         // checking if somebody is on our next step
-        if (this.field[bestRoute.y][bestRoute.x] === type.animal) {
-            const adversary = this.fieldClass.detectAnimalByCoordinates(bestRoute);
+        if (this.field[nextStep.y][nextStep.x] === type.animal) {
+            const adversary = this.fieldClass.detectAnimalByCoordinates(nextStep);
 
             // if yes, then pause it on 1 step and say that we need to recalculate route
             if (adversary && !adversary.isPaused()) {

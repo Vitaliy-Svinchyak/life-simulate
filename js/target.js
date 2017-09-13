@@ -28,19 +28,42 @@ class Target extends Point {
     }
 
     /**
-     * @param {int} y - target row
-     * @param {int} x - target column
-     */
-    parentHasCoordinates(y, x) {
-        return this.parent && this.parent.x === x && this.parent.y === y;
-    }
-
-    /**
      * @returns {Point[]}
      */
     getRouteArray() {
         const points = this.route.split('->');
 
         return points.map(p => new Point(p[0], p[1]));
+    }
+
+    /**
+     * @returns {Point}
+     */
+    getNextStep() {
+        const points = this.route.split('->');
+        const nextStep = points[0].split(':');
+
+        return new Point(+nextStep[0], +nextStep[1]);
+    }
+
+    /**
+     * @returns {boolean}
+     */
+    isPenultimateRun() {
+        return this.route
+                .substr(this.route.indexOf('->'))
+                .indexOf('->') === -1;
+    }
+
+    /**
+     * Need to delete first point from current route
+     */
+    afterStep() {
+        const foundedDivider = this.route.indexOf('->');
+
+        // delete our next step from our route
+        if (foundedDivider > -1) {
+            this.route = this.route.substr(foundedDivider + 2);
+        }
     }
 }
