@@ -9,23 +9,23 @@ class CollectiveMind {
     }
 
     /**
-     * For IsInListOfDeletion purposes
+     * For test purposes
      */
     parseHistory() {
         this.stepsHistory = {};
-        return;
-        let rowsCount = this.field.length;
-        let cellsCount = this.field[0].length;
 
-        for (let rowI = 0; rowI < rowsCount; rowI++) {
-            for (let cellI = 0; cellI < cellsCount; cellI++) {
+        for (let rowI = 0; rowI < this.fieldClass.fieldSize.rows; rowI++) {
+            for (let cellI = 0; cellI < this.fieldClass.fieldSize.cells; cellI++) {
                 if (this.field[rowI][cellI] === type.track) {
-                    this.stepsHistory[`${rowI}:${cellI}`] = true;
+                    this.stepsHistory[Point.getKeyExternally(rowI, cellI)] = true;
                 }
             }
         }
     }
 
+    /**
+     * @param {string} step
+     */
     addStepToHistory(step) {
         this.stepsHistory[step] = true;
     }
@@ -37,7 +37,7 @@ class CollectiveMind {
      */
     getVariants(variants, animal) {
         this.animal = animal;
-        let filteredVariants = variants.filter(v => !this.stepsHistory[`${v.y}:${v.x}`]);
+        const filteredVariants = variants.filter(v => !this.stepsHistory[Point.getKeyExternally(v.y, v.x)]);
 
         // if have nearby empty fields
         if (filteredVariants.length) {
@@ -57,7 +57,7 @@ class CollectiveMind {
      * @returns {Point[]}
      */
     filterVariantsByNearbyEmptyFields(variants) {
-        let selectedVariants = this.filterVariantsByDeadFields(variants);
+        const selectedVariants = this.filterVariantsByDeadFields(variants);
 
         if (selectedVariants.length) {
             return this.buildRouteToNearbyField(selectedVariants);
@@ -79,7 +79,7 @@ class CollectiveMind {
             this.rememberCurrentPositionAsDead();
         }
 
-        let variantsWithoutDeadFields = variants.filter(v => !this.deadFields[`${v.y}:${v.x}`]);
+        const variantsWithoutDeadFields = variants.filter(v => !this.deadFields[Point.getKeyExternally(v.y, v.x)]);
 
         if (variantsWithoutDeadFields.length <= 1) {
             this.rememberCurrentPositionAsDead();
@@ -115,7 +115,7 @@ class CollectiveMind {
             return [];
         }
 
-        let clonedRouteVariant = JSON.parse(JSON.stringify(routeVariant));
+        const clonedRouteVariant = JSON.parse(JSON.stringify(routeVariant));
         const foundedDivider = clonedRouteVariant.route.indexOf('->');
 
         // delete our next step from our route
@@ -139,18 +139,20 @@ class CollectiveMind {
 
     /**
      * Finds and builds route to the nearest not booked empty field
+     *
      * @param {Target[]} currentPositions
+     *
      * @returns {void}
      */
     createTargetForAnimal(currentPositions) {
         let founded = false;
         let routeVariant;
         let nextPositions = [];
-        let t = this.animal.target;
+        const animalTarget = this.animal.target;
         let buildRouteWithAnimalDetection = false;
 
         // Check already built route in cache
-        if (t && this.field[t.y][t.x] === type.empty) {
+        if (animalTarget && this.field[animalTarget.y][animalTarget.x] === type.empty) {
             // Check if some animal obstructs the passage
             buildRouteWithAnimalDetection = this.isConflict();
 
@@ -164,15 +166,15 @@ class CollectiveMind {
 
         while (founded !== true) {
             // Checks all variants of all variants to go
-            for (let currentPosition of currentPositions) {
-                let nextPositionsForCurrentPosition = this.getPossibleTargetsToGo(currentPosition, buildRouteWithAnimalDetection);
-                let goodPositions = nextPositionsForCurrentPosition
+            for (const currentPosition of currentPositions) {
+                const nextPositionsForCurrentPosition = this.getPossibleTargetsToGo(currentPosition, buildRouteWithAnimalDetection);
+                const goodPositions = nextPositionsForCurrentPosition
                     .filter(p => this.field[p.y][p.x] === type.empty); // filter by emptiness
 
                 // filter by booking
-                let goodPositionsWithoutBooked = goodPositions.filter(p => !this.bookedFields[`${p.y}:${p.x}`]);
+                const goodPositionsWithoutBooked = goodPositions.filter(p => !this.bookedFields[Point.getKeyExternally(p.y, p.x)]);
 
-                let rebookedRoute = this.pickUpFieldToTheNearestAnimal(goodPositionsWithoutBooked, goodPositions);
+                const rebookedRoute = this.pickUpFieldToTheNearestAnimal(goodPositionsWithoutBooked, goodPositions);
                 if (rebookedRoute) {
                     routeVariant = rebookedRoute;
                     founded = true;
@@ -203,7 +205,7 @@ class CollectiveMind {
             // Because there is a big tree of hierarchy here, we don't want this useless object to use our memory
             delete routeVariant.parent;
 
-            this.bookedFields[`${routeVariant.y}:${routeVariant.x}`] = this.animal;
+            this.bookedFields[Point.getKeyExternally(routeVariant.y, routeVariant.x)] = this.animal;
             this.animal.target = routeVariant;
         }
     }
@@ -215,16 +217,16 @@ class CollectiveMind {
 
         let bookedFields = [];
 
-        for (let route of goodPositions) {
-            if (this.bookedFields[`${route.y}:${route.x}`]) {
+        for (const route of goodPositions) {
+            if (this.bookedFields[Point.getKeyExternally(route.y, route.x)]) {
                 bookedFields.push(route);
             }
         }
 
-        for (let bookedField of bookedFields) {
-            let currentAnimalRouteLength = bookedField.route.split('->').length;
-            bookedField.owner = this.bookedFields[`${bookedField.y}:${bookedField.x}`];
-            let ownerRouteLength = bookedField.owner.target.route.split('->').length;
+        for (const bookedField of bookedFields) {
+            const currentAnimalRouteLength = bookedField.route.split('->').length;
+            bookedField.owner = this.bookedFields[Point.getKeyExternally(bookedField.y, bookedField.x)];
+            const ownerRouteLength = bookedField.owner.target.route.split('->').length;
             bookedField.gain = ownerRouteLength - currentAnimalRouteLength;
         }
 
@@ -247,7 +249,7 @@ class CollectiveMind {
      */
     getPossibleTargetsToGo(target, detectAnimals) {
         let targets = [];
-        this.usedFields[`${target.y}:${target.x}`] = true;
+        this.usedFields[Point.getKeyExternally(target.y, target.x)] = true;
 
         for (let y = target.y - 1; y <= target.y + 1; y++) {
             for (let x = target.x - 1; x <= target.x + 1; x++) {
@@ -269,10 +271,10 @@ class CollectiveMind {
         }
 
         // A big optimization, we don't want to go where there was already one of our routes
-        targets = targets.filter(v => !this.usedFields[`${v.y}:${v.x}`]);
+        targets = targets.filter(v => !this.usedFields[Point.getKeyExternally(v.y, v.x)]);
 
-        for (let variant of targets) {
-            this.usedFields[`${variant.y}:${variant.x}`] = true;
+        for (const variant of targets) {
+            this.usedFields[Point.getKeyExternally(variant.y, variant.x)] = true;
         }
 
         return targets;
@@ -284,14 +286,14 @@ class CollectiveMind {
      * @returns {boolean}
      */
     isConflict() {
-        let routeVariant = this.animal.target;
+        const routeVariant = this.animal.target;
         let bestRoute = routeVariant.route.split('->')[0];
         bestRoute = bestRoute.split(':');
         bestRoute = {y: +bestRoute[0], x: +bestRoute[1]};
 
         // checking if somebody is on our next step
         if (this.field[bestRoute.y][bestRoute.x] === type.animal) {
-            let adversary = this.fieldClass.detectAnimalByCoordinates(bestRoute);
+            const adversary = this.fieldClass.detectAnimalByCoordinates(bestRoute);
 
             // if yes, then pause it on 1 step and say that we need to recalculate route
             if (adversary && !adversary.isPaused()) {
@@ -307,12 +309,12 @@ class CollectiveMind {
         const animalTarget = this.animal.target;
 
         if (animalTarget) {
-            this.bookedFields[`${animalTarget.y}:${animalTarget.x}`] = false;
+            this.bookedFields[Point.getKeyExternally(animalTarget.y, animalTarget.x)] = false;
             this.animal.clearTarget();
         }
     }
 
     rememberCurrentPositionAsDead() {
-        this.deadFields[`${this.animal.y}:${this.animal.x}`] = true;
+        this.deadFields[Point.getKeyExternally(this.animal.y, this.animal.x)] = true;
     }
 }

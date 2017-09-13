@@ -11,4 +11,14 @@ class Point {
         this.y = y;
         this.x = x;
     }
+
+    /**
+     * @param {int} x
+     * @param {int} y
+     *
+     * @returns {string}
+     */
+    static getKeyExternally(y, x) {
+        return `${y}:${x}`;
+    }
 }

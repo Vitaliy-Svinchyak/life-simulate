@@ -19,10 +19,10 @@ class Field {
 
         this.field = fieldArray;
         this.textarea = document.querySelector('#field');
-        this.colectiveMind = new CollectiveMind(this);
         this.cachedDrawResults = [];
 
         this.detectFieldSize();
+        this.colectiveMind = new CollectiveMind(this);
         this.detectAnimals();
         this.draw();
     }
@@ -82,7 +82,6 @@ class Field {
     detectAnimals() {
         let id = 0;
         this.animals = [];
-        console.time('detectAnimals');
 
         for (let y = 0; y < this.fieldSize.rows; y++) {
             for (let x = 0; x < this.fieldSize.cells; x++) {
@@ -92,7 +91,6 @@ class Field {
                 }
             }
         }
-        console.timeEnd('detectAnimals');
     }
 
     /**

@@ -92,7 +92,7 @@ class Animal {
 
         if (filteredVariants.length) {
             variant = filteredVariants[getRandomInt(0, filteredVariants.length - 1)];
-            const stepKey = `${this.y}:${this.x}`;
+            const stepKey = Point.getKeyExternally(this.y, this.x);
 
             switch (this.strategy) {
                 case animalStrategy.OWN_HISTORY:
@@ -124,7 +124,7 @@ class Animal {
                 break;
             case animalStrategy.OWN_HISTORY:
                 if (variantsToGo.length > 1 && this.previousSteps) {
-                    const variantsToGoWithoutOldSteps = variantsToGo.filter(v => !this.previousSteps[`${v.y}:${v.x}`]);
+                    const variantsToGoWithoutOldSteps = variantsToGo.filter(v => !this.previousSteps[Point.getKeyExternally(v.y, v.x)]);
 
                     if (variantsToGoWithoutOldSteps.length) {
                         filteredVariants = variantsToGoWithoutOldSteps;
