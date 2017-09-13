@@ -38,17 +38,18 @@ class CollectiveMind {
     getVariants(variants, animal) {
         this.animal = animal;
         const filteredVariants = variants.filter(v => !this.stepsHistory[Point.getKeyExternally(v.y, v.x)]);
+        let resultVariants;
 
         // if have nearby empty fields
         if (filteredVariants.length) {
-            variants = filteredVariants;
+            resultVariants = filteredVariants;
             // delete current target to avoid teleportation
             this.clearAnimalTarget();
         } else {
-            variants = this.filterVariantsByNearbyEmptyFields(variants);
+            resultVariants = this.filterVariantsByNearbyEmptyFields(variants);
         }
 
-        return variants;
+        return resultVariants;
     }
 
     /**
@@ -208,6 +209,10 @@ class CollectiveMind {
             }
         }
 
+        if (!bookedFields.length) {
+            return false;
+        }
+
         for (const bookedField of bookedFields) {
             const currentAnimalRouteLength = bookedField.route.split('->').length;
             bookedField.owner = this.bookedFields[Point.getKeyExternally(bookedField.y, bookedField.x)];
@@ -220,6 +225,7 @@ class CollectiveMind {
         if (bookedFields[0].gain > 0) {
             delete bookedFields[0].owner.target;
             delete bookedFields[0].owner;
+
             return bookedFields[0];
         }
 
@@ -242,6 +248,8 @@ class CollectiveMind {
                 if (
                     (x !== target.x ^ y !== target.y)
                     && this.field[y][x] !== type.wall
+                    // A big optimization, we don't want to go where there was already one of our routes
+                    && !this.usedFields[Point.getKeyExternally(y, x)]
                 ) {
                     // If we are rebuilding route because of conflict with some animal
                     if (detectAnimals && this.field[y][x] === type.animal) {
@@ -249,15 +257,9 @@ class CollectiveMind {
                     }
 
                     targets.push(new Target(y, x, target));
+                    this.usedFields[Point.getKeyExternally(y, x)] = true;
                 }
             }
-        }
-
-        // A big optimization, we don't want to go where there was already one of our routes
-        targets = targets.filter(v => !this.usedFields[Point.getKeyExternally(v.y, v.x)]);
-
-        for (const variant of targets) {
-            this.usedFields[Point.getKeyExternally(variant.y, variant.x)] = true;
         }
 
         return targets;

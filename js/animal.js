@@ -67,16 +67,23 @@ class Animal {
      * @return {{}}
      */
     goTo(point, field) {
-        const changed = {};
-        changed[this.y] = true;
-        changed[point.y] = true;
+        const move = {
+            from: {
+                y: this.y,
+                x: this.x
+            },
+            to: {
+                y: point.y,
+                x: point.x
+            }
+        };
 
         field[this.y][this.x] = type.track;
         this.x = point.x;
         this.y = point.y;
         field[this.y][this.x] = type.animal;
 
-        return changed;
+        return move;
     }
 
     /**

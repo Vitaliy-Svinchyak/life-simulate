@@ -8,7 +8,7 @@ const type = {
     route: 'w'
 };
 
-const stepSpeed = 10;
+const stepSpeed = 0;
 const statisticSpeed = 1000;
 
 function getRandomInt(min, max) {

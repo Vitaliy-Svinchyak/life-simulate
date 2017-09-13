@@ -1,6 +1,6 @@
 /**
  * @property {Animal[]} animals                 - all animals of the field
- * @property {CollectiveMind} colectiveMind
+ * @property {CollectiveMind} collectiveMind
  * @property {HTMLTextAreaElement} textarea     - where we draw everything
  * @property {[]} cachedDrawResults
  * @property {[[Point]]} field
@@ -18,7 +18,9 @@ class Field {
         }
 
         this.field = fieldArray;
-        this.textarea = document.querySelector('#field');
+        this.canvas = document.querySelector('#canvas-field');
+        this.canvas.height = window.innerHeight;
+        this.canvas.width = window.innerWidth;
         this.cachedDrawResults = [];
 
         this.detectFieldSize();
@@ -62,18 +64,96 @@ class Field {
         return rows.map(s => s.split(''));
     }
 
-    // todo try canvas draw, must be faster on big fields
     draw() {
-        let text = '';
+        if (!this.fieldReady) {
+            this.drawCanvasField();
+        } else {
+            for (let move of this.movesOnThisStep) {
+                let formYDraw = this.defaultY + (move.from.y * this.pointSize.y) + move.from.y;
+                let formXDraw = this.defaultX + (move.from.x * this.pointSize.x) + move.from.x;
+                this.drawTrack(formXDraw, formYDraw);
 
-        for (let i = 0; i < this.fieldSize.rows; i++) {
-            if (!this.cachedDrawResults[i] || this.changedRows[i]) {
-                this.cachedDrawResults[i] = this.field[i].join('');
+                let yDraw = this.defaultY + (move.to.y * this.pointSize.y) + move.to.y;
+                let xDraw = this.defaultX + (move.to.x * this.pointSize.x) + move.to.x;
+                this.drawAnimal(xDraw, yDraw);
             }
-            text += this.cachedDrawResults[i] + '\n';
+        }
+    }
+
+    drawCanvasField() {
+        this.fieldReady = true;
+        this.pointSize = this.calculatePointSize();
+        this.context = this.canvas.getContext("2d");
+
+        this.defaultY = Math.floor((window.innerHeight - ((this.pointSize.y + 1) * this.fieldSize.rows)) / 2);
+        this.defaultX = Math.floor((window.innerWidth - ((this.pointSize.x + 1) * this.fieldSize.cells)) / 2);
+
+        let yDraw = this.defaultY;
+
+        for (let y = 0; y < this.fieldSize.rows; y++) {
+            let xDraw = this.defaultX;
+
+            for (let x = 0; x < this.fieldSize.cells; x++) {
+                this.context.fillStyle = "black";
+                if (this.field[y][x] === type.wall) {
+                    this.context.fillRect(xDraw, yDraw, this.pointSize.x, this.pointSize.y);
+                } else if (this.field[y][x] === type.animal) {
+                    this.drawAnimal(xDraw, yDraw);
+                }
+                xDraw += this.pointSize.x + this.pointSize.margin;
+            }
+            yDraw += this.pointSize.y + this.pointSize.margin;
+        }
+    }
+
+    drawAnimal(xDraw, yDraw) {
+        this.clearRect(xDraw, yDraw);
+        let x = Math.floor(xDraw + this.pointSize.x / 2);
+        let y = Math.floor(yDraw + this.pointSize.y / 2);
+        let radius = Math.floor(this.pointSize.y / 2) - 2;
+
+        this.context.beginPath();
+        this.context.fillStyle = 'red';
+        this.context.strokeStyle = 'red';
+        this.context.arc(x, y, radius, 0, 2 * Math.PI);
+        this.context.fill();
+        this.context.stroke();
+    }
+
+    drawTrack(xDraw, yDraw) {
+        this.clearRect(xDraw, yDraw);
+
+        this.context.beginPath();
+        this.context.moveTo(xDraw, yDraw);
+        this.context.lineTo(xDraw + this.pointSize.x, yDraw + this.pointSize.y);
+        this.context.stroke();
+
+        this.context.beginPath();
+        this.context.moveTo(xDraw + this.pointSize.x, yDraw);
+        this.context.lineTo(xDraw, yDraw + this.pointSize.y);
+        this.context.stroke();
+    }
+
+    clearRect(xDraw, yDraw) {
+        this.context.fillStyle = 'white';
+        this.context.strokeStyle = 'black';
+        this.context.fillRect(xDraw, yDraw, this.pointSize.x, this.pointSize.y);
+        this.context.fillStyle = 'black';
+    }
+
+    calculatePointSize() {
+        let xSize = Math.floor((window.innerHeight - this.fieldSize.cells) / (this.fieldSize.cells + 1));
+        let ySize = Math.floor((window.innerWidth - this.fieldSize.rows ) / (this.fieldSize.rows + 1));
+        // uncomment for full screen (but with blur)
+        // xSize = parseFloat(((window.innerHeight - this.fieldSize.cells) / (this.fieldSize.cells + 1)).toFixed(1));
+        // ySize = parseFloat(((window.innerWidth - this.fieldSize.rows ) / (this.fieldSize.rows + 1)).toFixed(1));
+
+        let size = ySize > xSize ? xSize : ySize;
+        if (size < 2) {
+            size = 2;
         }
 
-        this.textarea.value = text;
+        return {y: size, x: size, margin: 1};
     }
 
     /**
@@ -131,15 +211,15 @@ class Field {
      * @return {int}
      */
     makeSteps(stepsCount) {
-        this.changedRows = {};
+        this.movesOnThisStep = [];
 
         for (const animal of this.animals) {
-            const changedRowsByAnimal = animal.step(this.field);
+            const animalStep = animal.step(this.field);
 
-            if (changedRowsByAnimal) {
+            if (animalStep) {
                 stepsCount++;
+                this.movesOnThisStep.push(animalStep);
             }
-            this.changedRows = Object.assign(this.changedRows, changedRowsByAnimal);
         }
 
         return stepsCount;
@@ -149,19 +229,7 @@ class Field {
      * @return {boolean}
      */
     hasEmptyFields() {
-        const canGo = this.animals.filter(a => a.canGo());
-
-        if (!canGo.length) {
-            return false;
-        }
-
-        for (const row of this.field) {
-            if (~row.indexOf(type.empty)) {
-                return true;
-            }
-        }
-
-        return false;
+        return this.animals.filter(a => a.canGo()).length > 0;
     }
 
     /**
