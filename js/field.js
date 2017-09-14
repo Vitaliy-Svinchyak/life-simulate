@@ -62,7 +62,6 @@ class Field {
     }
 
     draw() {
-        return;
         this.painter.draw();
     }
 

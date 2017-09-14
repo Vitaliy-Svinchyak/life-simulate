@@ -8,7 +8,6 @@ class CollectiveMind {
         this.fieldMap = field.fieldMap;
         this.fieldClass = field;
         this.deadFields = {};
-        // this.usedFields = {};
         this.usedFields = new Map();
         this.bookedFields = {};
         this.parseHistory();
