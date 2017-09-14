@@ -247,7 +247,7 @@ class CollectiveMind {
             for (let x = target.x - 1; x <= target.x + 1; x++) {
                 if (
                     (x !== target.x ^ y !== target.y)
-                    && this.field[y][x] !== type.wall
+                    && solidObjects.indexOf(this.field[y][x]) === -1
                     // A big optimization, we don't want to go where there was already one of our routes
                     && !this.usedFields[Point.getKeyExternally(y, x)]
                 ) {

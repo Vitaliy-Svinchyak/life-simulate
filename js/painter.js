@@ -10,6 +10,8 @@ class Painter {
         this.field = field;
         this.wallImg = new Image();
         this.wallImg.src = 'images/wall.png';
+        this.treeImg = new Image();
+        this.treeImg.src = 'images/tree.png';
         this.humanImg = new Image();
         this.humanImg.src = 'images/human.png';
     }
@@ -49,7 +51,8 @@ class Painter {
             for (let x = 0; x < this.field.fieldSize.cells; x++) {
                 if (this.field.field[y][x] === type.wall) {
                     this.drawWall(xDraw, yDraw);
-
+                } else if (this.field.field[y][x] === type.tree) {
+                    this.drawTree(xDraw, yDraw);
                 } else if (this.field.field[y][x] === type.animal) {
                     this.drawHuman(xDraw, yDraw);
                 }
@@ -73,6 +76,14 @@ class Painter {
      */
     drawHuman(xDraw, yDraw) {
         this.context.drawImage(this.humanImg, xDraw, yDraw, this.pointSize.x, this.pointSize.y);
+    }
+
+    /**
+     * @param {int} xDraw
+     * @param {int} yDraw
+     */
+    drawTree(xDraw, yDraw) {
+        this.context.drawImage(this.treeImg, xDraw, yDraw, this.pointSize.x, this.pointSize.y);
     }
 
     /**

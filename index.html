@@ -19,13 +19,15 @@
 <script src="js/point.js"></script>
 <script src="js/target.js"></script>
 <script src="js/map_generator.js"></script>
+<script src="js/game_field_generator.js"></script>
 <script src="js/collective_mind.js"></script>
 <script src="js/animal.js"></script>
 <script src="js/painter.js"></script>
 <script src="js/field.js"></script>
 
 <script>
-    window.gameField = new Field(mapGenerator.rand(50, 50));
+    window.gameField = new Field(gameFieldGenerator.gameMap(50, 50));
+//    window.gameField = new Field(mapGenerator.rand(50, 50));
     //    window.gameField.start();
 </script>
 </body>

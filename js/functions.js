@@ -1,12 +1,13 @@
 const type = {
     wall: '■',
-    // animal: '֍',
     animal: 'o',
-    plant: '֏',
+    tree: '֏',
     empty: ' ',
     track: 'x',
     route: 'w'
 };
+
+const solidObjects = [type.wall, type.tree];
 
 const stepSpeed = 0;
 const statisticSpeed = 1000;
