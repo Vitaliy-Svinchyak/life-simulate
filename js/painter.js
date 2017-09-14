@@ -7,7 +7,7 @@ class Painter {
      */
     constructor(canvas, field) {
         this.canvas = canvas;
-        this.field = field;
+        this.fieldMap = field;
         this.pointSize = this.calculatePointSize();
         this.setCanvasSize();
 
@@ -23,7 +23,7 @@ class Painter {
         if (!this.fieldReady) {
             this.drawCanvasField();
         } else {
-            for (const move of this.field.movesOnThisStep) {
+            for (const move of this.fieldMap.movesOnThisStep) {
                 const formYDraw = this.defaultY + (move.from.y * this.pointSize.y) + move.from.y;
                 const formXDraw = this.defaultX + (move.from.x * this.pointSize.x) + move.from.x;
                 this.drawTrack(formXDraw, formYDraw);
@@ -46,21 +46,22 @@ class Painter {
             this.defaultY = 0;
             this.defaultX = 0;
         } else {
-            this.defaultY = Math.floor((window.innerHeight - ((this.pointSize.y + 1) * this.field.fieldSize.rows)) / 2);
-            this.defaultX = Math.floor((window.innerWidth - ((this.pointSize.x + 1) * this.field.fieldSize.cells)) / 2);
+            this.defaultY = Math.floor((window.innerHeight - ((this.pointSize.y + 1) * this.fieldMap.fieldSize.rows)) / 2);
+            this.defaultX = Math.floor((window.innerWidth - ((this.pointSize.x + 1) * this.fieldMap.fieldSize.cells)) / 2);
         }
 
         let yDraw = this.defaultY;
 
-        for (let y = 0; y < this.field.fieldSize.rows; y++) {
+        for (let y = 0; y < this.fieldMap.fieldSize.rows; y++) {
             let xDraw = this.defaultX;
+            const yMap = this.fieldMap.fieldMap.get(y);
 
-            for (let x = 0; x < this.field.fieldSize.cells; x++) {
-                if (this.field.field[y][x] === type.wall) {
+            for (let x = 0; x < this.fieldMap.fieldSize.cells; x++) {
+                if (yMap.get(x) === type.wall) {
                     this.drawWall(xDraw, yDraw);
-                } else if (this.field.field[y][x] === type.tree) {
+                } else if (yMap.get(x) === type.tree) {
                     this.drawTree(xDraw, yDraw);
-                } else if (this.field.field[y][x] === type.animal) {
+                } else if (yMap.get(x) === type.animal) {
                     this.drawHuman(xDraw, yDraw);
                 }
                 xDraw += this.pointSize.x + this.pointSize.margin;
@@ -113,8 +114,8 @@ class Painter {
     }
 
     calculatePointSize() {
-        let xSize = Math.floor((window.innerHeight - this.field.fieldSize.cells) / (this.field.fieldSize.cells + 1));
-        let ySize = Math.floor((window.innerWidth - this.field.fieldSize.rows ) / (this.field.fieldSize.rows + 1));
+        let xSize = Math.floor((window.innerHeight - this.fieldMap.fieldSize.cells) / (this.fieldMap.fieldSize.cells + 1));
+        let ySize = Math.floor((window.innerWidth - this.fieldMap.fieldSize.rows ) / (this.fieldMap.fieldSize.rows + 1));
 
         let size = ySize > xSize ? xSize : ySize;
         if (size < 8) {
@@ -128,8 +129,8 @@ class Painter {
     }
 
     setCanvasSize() {
-        let height = (this.pointSize.y + 1) * this.field.fieldSize.rows;
-        let width = (this.pointSize.x + 1) * this.field.fieldSize.cells;
+        let height = (this.pointSize.y + 1) * this.fieldMap.fieldSize.rows;
+        let width = (this.pointSize.x + 1) * this.fieldMap.fieldSize.cells;
 
         if (height < window.innerHeight || width < window.innerWidth) {
             height = window.innerHeight;
