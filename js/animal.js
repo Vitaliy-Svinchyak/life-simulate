@@ -37,7 +37,7 @@ class Animal {
     }
 
     /**
-     * @param {Field} field
+     * @param {Map} field
      *
      * @returns {{}|null}
      */
@@ -65,7 +65,7 @@ class Animal {
      * Leaves a trace on its current position and moves to a new one
      *
      * @param {Point} point
-     * @param {Field} field
+     * @param {Map} field
      *
      * @return {{}}
      */
@@ -81,10 +81,10 @@ class Animal {
             }
         };
 
-        field[this.y][this.x] = type.track;
+        field.get(this.y).set(this.x, type.track);
         this.x = point.x;
         this.y = point.y;
-        field[this.y][this.x] = type.animal;
+        field.get(this.y).set(this.x, type.animal);
 
         return move;
     }
@@ -161,7 +161,7 @@ class Animal {
      *      - Point is an animal
      * Animal can't walk diagonally. Only left, right, up, down
      *
-     * @param {Field} field
+     * @param {Map} field
      *
      * @returns {Point[]}
      */
@@ -169,9 +169,10 @@ class Animal {
         const variants = [];
 
         for (let y = this.y - 1; y <= this.y + 1; y++) {
+            const yMap = field.get(y);
             for (let x = this.x - 1; x <= this.x + 1; x++) {
-                if (solidObjects.indexOf(field[y][x]) === -1
-                    && field[y][x] !== type.animal
+                if (solidObjects.indexOf(yMap.get(x)) === -1
+                    && yMap.get(x) !== type.animal
                     // can't walk diagonally
                     && (x !== this.x ^ y !== this.y)
                 ) {

@@ -7,11 +7,11 @@ class MapGenerator {
     }
 
     empty(rows, cells) {
-        let field = [];
+        let field = new Map();
         let item;
 
         for (let y = 0; y <= rows; y++) {
-            field[y] = [];
+            const yMap = new Map();
 
             for (let x = 0; x <= cells; x++) {
                 if (y === 0 || y === rows || x === 0 || x === cells) {
@@ -20,7 +20,8 @@ class MapGenerator {
                     item = type.empty;
                 }
 
-                field[y][x] = item;
+                yMap.set(x, item);
+                field.set(y, yMap);
             }
         }
 
@@ -56,20 +57,20 @@ class MapGenerator {
     rooms(rows, cells) {
         this.minRoomSize = {x: 4, y: 4};
         this.maxRoomSize = {x: 9, y: 9};
-        this.field = this.empty(rows, cells);
+        this.fieldMap = this.empty(rows, cells);
         this.fieldSize = {maxY: rows, maxX: cells};
         console.time('rooms');
         this.drawRooms();
         this.clearFatWalls();
         this.drawDoors();
         console.timeEnd('rooms');
-        this.field[1][1] = type.animal;
-        this.field[1][this.field[0].length - 2] = type.animal;
-        this.field[this.field.length - 2][this.field[0].length - 2] = type.animal;
-        this.field[this.field.length - 2][1] = type.animal;
+        this.fieldMap[1][1] = type.animal;
+        this.fieldMap[1][this.fieldMap[0].length - 2] = type.animal;
+        this.fieldMap[this.fieldMap.length - 2][this.fieldMap[0].length - 2] = type.animal;
+        this.fieldMap[this.fieldMap.length - 2][1] = type.animal;
 
         this.clearMemory();
-        return this.field;
+        return this.fieldMap;
     }
 
     clearMemory() {
@@ -84,7 +85,7 @@ class MapGenerator {
         let id = 0;
         for (let y = 1; y < this.fieldSize.maxY; y++) {
             for (let x = 1; x < this.fieldSize.maxX; x++) {
-                if (this.field[y][x] === type.wall) {
+                if (this.fieldMap[y][x] === type.wall) {
                     continue;
                 }
 
@@ -183,7 +184,7 @@ class MapGenerator {
             return;
         }
 
-        this.field[coordinates.y][coordinates.x] = type.empty;
+        this.fieldMap[coordinates.y][coordinates.x] = type.empty;
     }
 
     getConnectVariants(room) {
@@ -228,11 +229,11 @@ class MapGenerator {
                 y = fieldToCheck.y;
                 x = fieldToCheck.x;
 
-                if (this.field[y - 1][x] === type.wall) {
+                if (this.fieldMap[y - 1][x] === type.wall) {
                     room.wallList[`${y - 1}:${x}`] = true;
                 }
 
-                if (this.field[y][x + 1] === type.empty) {
+                if (this.fieldMap[y][x + 1] === type.empty) {
                     if (!room.emptyList[`${y}:${x + 1}`]) {
                         newToCheck.push({y: y, x: x + 1});
                     }
@@ -243,7 +244,7 @@ class MapGenerator {
                 }
 
 
-                if (this.field[y + 1][x] === type.empty) {
+                if (this.fieldMap[y + 1][x] === type.empty) {
                     if (!room.emptyList[`${y + 1}:${x}`]) {
                         newToCheck.push({y: y + 1, x: x});
                     }
@@ -252,7 +253,7 @@ class MapGenerator {
                     room.wallList[`${y + 1}:${x}`] = true;
                 }
 
-                if (this.field[y][x - 1] === type.empty) {
+                if (this.fieldMap[y][x - 1] === type.empty) {
                     if (!room.emptyList[`${y}:${x - 1}`]) {
                         newToCheck.push({y: y, x: x - 1});
                     }
@@ -272,12 +273,12 @@ class MapGenerator {
     clearFatWalls() {
         for (let y = 1; y < this.fieldSize.maxY; y++) {
             xFor: for (let x = 1; x < this.fieldSize.maxX; x++) {
-                if (this.field[y][x] !== type.wall) {
+                if (this.fieldMap[y][x] !== type.wall) {
                     continue xFor;
                 }
 
                 if (this.canDelete(y, x)) {
-                    this.field[y][x] = type.empty;
+                    this.fieldMap[y][x] = type.empty;
                 }
             }
         }
@@ -344,7 +345,7 @@ class MapGenerator {
 
         for (let yCheck = y - 1; yCheck <= y + 1; yCheck++) {
             for (let xCheck = x - 1; xCheck <= x + 1; xCheck++) {
-                if (this.field[yCheck][xCheck] === type.wall) {
+                if (this.fieldMap[yCheck][xCheck] === type.wall) {
                     map += '1';
                 } else {
                     map += '0';
@@ -411,24 +412,24 @@ class MapGenerator {
 
         for (let y = startY; y <= roomEndY; y++) {
             if (!this.wallsIntersect(y, cursorRectangle.x)) {
-                this.field[y][cursorRectangle.x] = type.wall;
+                this.fieldMap[y][cursorRectangle.x] = type.wall;
                 occupiedWalls[`${y}:${cursorRectangle.x}`] = true;
             }
 
             if (!this.wallsIntersect(y, roomEndX)) {
-                this.field[y][roomEndX] = type.wall;
+                this.fieldMap[y][roomEndX] = type.wall;
                 occupiedWalls[`${y}:${roomEndX}`] = true;
             }
         }
 
         for (let x = cursorRectangle.x; x <= roomEndX; x++) {
             if (!this.wallsIntersect(startY, x)) {
-                this.field[startY][x] = type.wall;
+                this.fieldMap[startY][x] = type.wall;
                 occupiedWalls[`${startY}:${x}`] = true;
             }
 
             if (!this.wallsIntersect(roomEndY, x)) {
-                this.field[roomEndY][x] = type.wall;
+                this.fieldMap[roomEndY][x] = type.wall;
                 occupiedWalls[`${roomEndY}:${x}`] = true;
             }
         }
@@ -489,7 +490,6 @@ class MapGenerator {
     }
 
     deleteDuplications(wallsInRange) {
-        // console.log(wallsInRange);
         const filtered = [];
 
         for (const wall of wallsInRange) {

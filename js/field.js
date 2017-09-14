@@ -1,10 +1,10 @@
 "use strict";
 
 /**
- * @property {Animal[]} animals                 - all animals of the field
+ * @property {Animal[]} animals                 - all animals of the fieldMap
  * @property {CollectiveMind} collectiveMind
  * @property {HTMLTextAreaElement} textarea     - where we draw everything
- * @property {[[Point]]} field
+ * @property {[[Point]]} fieldMap
  */
 class Field {
 
@@ -12,13 +12,13 @@ class Field {
      * @param {[[Point]]|string} field
      */
     constructor(field) {
-        let fieldArray = field;
+        let fieldMap = field;
 
         if (typeof field === 'string') {
-            fieldArray = this.parseString(field);
+            fieldMap = this.parseString(field);
         }
 
-        this.field = fieldArray;
+        this.fieldMap = fieldMap;
         this.detectFieldSize();
         this.painter = new Painter(document.querySelector('#canvas-field'), this);
         this.colectiveMind = new CollectiveMind(this);
@@ -30,8 +30,8 @@ class Field {
         let emptyFields = 0;
         let visitedFields = 0;
 
-        for (const row of this.field) {
-            for (const symbol of row) {
+        for (const [key, row] of this.fieldMap) {
+            for (const [key, symbol] of row) {
                 if (symbol === type.empty) {
                     emptyFields++;
                 }
@@ -49,7 +49,7 @@ class Field {
     }
 
     /**
-     * Parses string representation of field (for simulating purposes)
+     * Parses string representation of fieldMap (for simulating purposes)
      *
      * @param {string} string
      *
@@ -66,15 +66,17 @@ class Field {
     }
 
     /**
-     * Find all animals on the field and create objects for them
+     * Find all animals on the fieldMap and create objects for them
      */
     detectAnimals() {
         let id = 0;
         this.animals = [];
 
         for (let y = 0; y < this.fieldSize.rows; y++) {
+            const yMap = this.fieldMap.get(y);
+
             for (let x = 0; x < this.fieldSize.cells; x++) {
-                if (this.field[y][x] === type.animal) {
+                if (yMap.get(x) === type.animal) {
                     this.animals.push(new Animal(y, x, this.colectiveMind, id));
                     id++;
                 }
@@ -123,7 +125,7 @@ class Field {
         this.movesOnThisStep = [];
 
         for (const animal of this.animals) {
-            const animalStep = animal.step(this.field);
+            const animalStep = animal.step(this.fieldMap);
 
             if (animalStep) {
                 stepsCount++;
@@ -148,7 +150,7 @@ class Field {
         const points = routeVariant.getRouteArray();
 
         for (const point of points) {
-            this.field[point.y][point.x] = type.route;
+            this.fieldMap.get(point.y).set(point.x, type.route);
         }
     }
 
@@ -169,8 +171,8 @@ class Field {
 
     detectFieldSize() {
         this.fieldSize = {
-            rows: this.field.length,
-            cells: this.field[0].length,
+            rows: this.fieldMap.size,
+            cells: this.fieldMap.get(0).size,
         };
     }
 }

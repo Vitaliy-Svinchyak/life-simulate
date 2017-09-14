@@ -1,11 +1,14 @@
 "use strict";
 
+/**
+ * @property {Map} fieldMap
+ */
 class CollectiveMind {
     constructor(field) {
-        this.field = field.field;
+        this.fieldMap = field.fieldMap;
         this.fieldClass = field;
         this.deadFields = {};
-        this.usedFields = {};
+        this.usedFields = new Map();
         this.bookedFields = {};
         this.parseHistory();
     }
@@ -17,8 +20,10 @@ class CollectiveMind {
         this.stepsHistory = new Map();
 
         for (let rowI = 0; rowI < this.fieldClass.fieldSize.rows; rowI++) {
+            const yMap = this.fieldMap.get(rowI);
+
             for (let cellI = 0; cellI < this.fieldClass.fieldSize.cells; cellI++) {
-                if (this.field[rowI][cellI] === type.track) {
+                if (yMap.get(cellI) === type.track) {
                     this.stepsHistory.set(Point.getKeyExternally(rowI, cellI), true);
                 }
             }
@@ -92,7 +97,7 @@ class CollectiveMind {
     }
 
     /**
-     * Returns a best variant to go, which will lead to the nearest empty field
+     * Returns a best variant to go, which will lead to the nearest empty fieldMap
      * @param {Point[]} variants
      * @returns {*} next variant to go
      */
@@ -126,7 +131,7 @@ class CollectiveMind {
     }
 
     /**
-     * Finds and builds route to the nearest not booked empty field
+     * Finds and builds route to the nearest not booked empty fieldMap
      *
      * @param {Target[]|Point[]} currentPositions
      *
@@ -140,7 +145,7 @@ class CollectiveMind {
         let buildRouteWithAnimalDetection = false;
 
         // Check already built route in cache
-        if (animalTarget && this.field[animalTarget.y][animalTarget.x] === type.empty) {
+        if (animalTarget && this.fieldMap.get(animalTarget.y).get(animalTarget.x) === type.empty) {
             // Check if some animal obstructs the passage
             buildRouteWithAnimalDetection = this.isConflict();
 
@@ -157,7 +162,7 @@ class CollectiveMind {
             for (const currentPosition of currentPositions) {
                 const nextPositionsForCurrentPosition = this.getPossibleTargetsToGo(currentPosition, buildRouteWithAnimalDetection);
                 const goodPositions = nextPositionsForCurrentPosition
-                    .filter(p => this.field[p.y][p.x] === type.empty); // filter by emptiness
+                    .filter(p => this.fieldMap.get(p.y).get(p.x) === type.empty); // filter by emptiness
 
                 // filter by booking
                 const goodPositionsWithoutBooked = goodPositions.filter(p => !this.bookedFields[Point.getKeyExternally(p.y, p.x)]);
@@ -249,13 +254,13 @@ class CollectiveMind {
             for (let x = target.x - 1; x <= target.x + 1; x++) {
                 if (
                     (x !== target.x ^ y !== target.y)
-                    && solidObjects.indexOf(this.field[y][x]) === -1
+                    && solidObjects.indexOf(this.fieldMap.get(y).get(x)) === -1
                     // A big optimization, we don't want to go where there was already one of our routes
                     // && !this.usedFields[Point.getKeyExternally(y, x)]
                     && !this.usedFields.has(Point.getKeyExternally(y, x))
                 ) {
                     // If we are rebuilding route because of conflict with some animal
-                    if (detectAnimals && this.field[y][x] === type.animal) {
+                    if (detectAnimals && this.fieldMap.get(y).get(x) === type.animal) {
                         continue;
                     }
 
@@ -277,7 +282,7 @@ class CollectiveMind {
         const nextStep = this.animal.target.getNextStep();
 
         // checking if somebody is on our next step
-        if (this.field[nextStep.y][nextStep.x] === type.animal) {
+        if (this.fieldMap.get(nextStep.y).get(nextStep.x) === type.animal) {
             const adversary = this.fieldClass.detectAnimalByCoordinates(nextStep);
 
             // if yes, then pause it on 1 step and say that we need to recalculate route
