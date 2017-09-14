@@ -47,7 +47,6 @@ class Painter {
             let xDraw = this.defaultX;
 
             for (let x = 0; x < this.field.fieldSize.cells; x++) {
-                this.context.fillStyle = "black";
                 if (this.field.field[y][x] === type.wall) {
                     this.drawWall(xDraw, yDraw);
 
@@ -82,8 +81,8 @@ class Painter {
      */
     drawTrack(xDraw, yDraw) {
         this.clearRect(xDraw, yDraw);
-        this.context.fillRect(xDraw, yDraw, this.pointSize.x, this.pointSize.y);
         this.context.fillStyle = 'rgba(128, 128, 128, 0.25)';
+        this.context.fillRect(xDraw, yDraw, this.pointSize.x, this.pointSize.y);
         this.context.fill();
     }
 
