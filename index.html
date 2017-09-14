@@ -10,7 +10,9 @@
   <link rel="preload" href="images/wall.png" as="image">
   <link rel="preload" href="images/human.png" as="image">
   <link rel="preload" href="images/tree.png" as="image">
-  <link rel="apple-touch-icon icon" href="images/human.png">
+  <link rel="preload" href="images/water.png" as="image">
+  <link rel="preload" href="images/house.png" as="image">
+  <link rel="apple-touch-icon icon" href="images/house.png">
 </head>
 <body>
 <canvas id="canvas-field"></canvas>
@@ -26,9 +28,13 @@
 <script src="js/field.js"></script>
 
 <script>
-    window.gameField = new Field(gameFieldGenerator.gameMap(50, 50));
-//    window.gameField = new Field(mapGenerator.rand(50, 50));
-    //    window.gameField.start();
+    setTimeout(() => {
+        const size = getFullScreenSize();
+
+//        window.gameField = new Field(gameFieldGenerator.gameMap(size.y, size.x));
+        window.gameField = new Field(gameFieldGenerator.gameMap(25, 25));
+        //    window.gameField.start();
+    }, 0);
 </script>
 </body>
 </html>

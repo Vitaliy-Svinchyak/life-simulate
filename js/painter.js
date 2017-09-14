@@ -1,3 +1,5 @@
+"use strict";
+
 class Painter {
     /**
      * @param {HTMLCanvasElement} canvas
@@ -5,9 +7,10 @@ class Painter {
      */
     constructor(canvas, field) {
         this.canvas = canvas;
-        this.canvas.height = window.innerHeight;
-        this.canvas.width = window.innerWidth;
         this.field = field;
+        this.pointSize = this.calculatePointSize();
+        this.setCanvasSize();
+
         this.wallImg = new Image();
         this.wallImg.src = 'images/wall.png';
         this.treeImg = new Image();
@@ -37,11 +40,15 @@ class Painter {
      */
     drawCanvasField() {
         this.fieldReady = true;
-        this.pointSize = this.calculatePointSize();
         this.context = this.canvas.getContext("2d");
 
-        this.defaultY = Math.floor((window.innerHeight - ((this.pointSize.y + 1) * this.field.fieldSize.rows)) / 2);
-        this.defaultX = Math.floor((window.innerWidth - ((this.pointSize.x + 1) * this.field.fieldSize.cells)) / 2);
+        if (this.canvas.width > window.innerWidth || this.canvas.height > window.innerHeight) {
+            this.defaultY = 0;
+            this.defaultX = 0;
+        } else {
+            this.defaultY = Math.floor((window.innerHeight - ((this.pointSize.y + 1) * this.field.fieldSize.rows)) / 2);
+            this.defaultX = Math.floor((window.innerWidth - ((this.pointSize.x + 1) * this.field.fieldSize.cells)) / 2);
+        }
 
         let yDraw = this.defaultY;
 
@@ -92,7 +99,7 @@ class Painter {
      */
     drawTrack(xDraw, yDraw) {
         this.clearRect(xDraw, yDraw);
-        this.context.fillStyle = 'rgba(128, 128, 128, 0.25)';
+        this.context.fillStyle = 'rgba(128, 128, 128, 0.35)';
         this.context.fillRect(xDraw, yDraw, this.pointSize.x, this.pointSize.y);
         this.context.fill();
     }
@@ -108,15 +115,29 @@ class Painter {
     calculatePointSize() {
         let xSize = Math.floor((window.innerHeight - this.field.fieldSize.cells) / (this.field.fieldSize.cells + 1));
         let ySize = Math.floor((window.innerWidth - this.field.fieldSize.rows ) / (this.field.fieldSize.rows + 1));
-        // uncomment for full screen (but with blur)
-        // xSize = parseFloat(((window.innerHeight - this.field.fieldSize.cells) / (this.field.fieldSize.cells + 1)).toFixed(1));
-        // ySize = parseFloat(((window.innerWidth - this.field.fieldSize.rows ) / (this.field.fieldSize.rows + 1)).toFixed(1));
 
         let size = ySize > xSize ? xSize : ySize;
-        if (size < 2) {
-            size = 2;
+        if (size < 8) {
+            size = 8;
+        }
+        if (size > 32) {
+            size = 32;
         }
 
         return {y: size, x: size, margin: 1};
+    }
+
+    setCanvasSize() {
+        let height = (this.pointSize.y + 1) * this.field.fieldSize.rows;
+        let width = (this.pointSize.x + 1) * this.field.fieldSize.cells;
+
+        if (height < window.innerHeight || width < window.innerWidth) {
+            height = window.innerHeight;
+            width = window.innerWidth;
+            document.body.style.overflow = 'hidden';
+        }
+
+        this.canvas.height = height;
+        this.canvas.width = width;
     }
 }

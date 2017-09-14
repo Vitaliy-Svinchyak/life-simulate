@@ -38,7 +38,7 @@ class MapGenerator {
                 if (y === 0 || y === rows || x === 0 || x === cells) {
                     item = type.wall;
                 } else {
-                    item = getRandomInt(0, 3) ? type.empty : type.wall;
+                    item = getRandomInt(0, 4) ? type.empty : type.wall;
                 }
 
                 field[y][x] = item;

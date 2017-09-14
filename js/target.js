@@ -1,3 +1,5 @@
+"use strict";
+
 /**
  * @property {int} y        - target row
  * @property {int} x        - target column

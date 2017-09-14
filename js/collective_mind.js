@@ -1,3 +1,5 @@
+"use strict";
+
 class CollectiveMind {
     constructor(field) {
         this.field = field.field;
@@ -12,12 +14,12 @@ class CollectiveMind {
      * For test purposes
      */
     parseHistory() {
-        this.stepsHistory = {};
+        this.stepsHistory = new Map();
 
         for (let rowI = 0; rowI < this.fieldClass.fieldSize.rows; rowI++) {
             for (let cellI = 0; cellI < this.fieldClass.fieldSize.cells; cellI++) {
                 if (this.field[rowI][cellI] === type.track) {
-                    this.stepsHistory[Point.getKeyExternally(rowI, cellI)] = true;
+                    this.stepsHistory.set(Point.getKeyExternally(rowI, cellI), true);
                 }
             }
         }
@@ -27,7 +29,7 @@ class CollectiveMind {
      * @param {string} step
      */
     addStepToHistory(step) {
-        this.stepsHistory[step] = true;
+        this.stepsHistory.set(step, true);
     }
 
     /**
@@ -37,7 +39,7 @@ class CollectiveMind {
      */
     getVariants(variants, animal) {
         this.animal = animal;
-        const filteredVariants = variants.filter(v => !this.stepsHistory[Point.getKeyExternally(v.y, v.x)]);
+        const filteredVariants = variants.filter(v => !this.stepsHistory.has(Point.getKeyExternally(v.y, v.x)));
         let resultVariants;
 
         // if have nearby empty fields
@@ -148,7 +150,7 @@ class CollectiveMind {
         }
 
         this.clearAnimalTarget();
-        this.usedFields = {};
+        this.usedFields = new Map();
 
         while (founded !== true) {
             // Checks all variants of all variants to go
@@ -241,7 +243,7 @@ class CollectiveMind {
     getPossibleTargetsToGo(target, detectAnimals) {
         /** @type Target[] */
         let targets = [];
-        this.usedFields[Point.getKeyExternally(target.y, target.x)] = true;
+        this.usedFields.set(Point.getKeyExternally(target.y, target.x), true);
 
         for (let y = target.y - 1; y <= target.y + 1; y++) {
             for (let x = target.x - 1; x <= target.x + 1; x++) {
@@ -249,7 +251,8 @@ class CollectiveMind {
                     (x !== target.x ^ y !== target.y)
                     && solidObjects.indexOf(this.field[y][x]) === -1
                     // A big optimization, we don't want to go where there was already one of our routes
-                    && !this.usedFields[Point.getKeyExternally(y, x)]
+                    // && !this.usedFields[Point.getKeyExternally(y, x)]
+                    && !this.usedFields.has(Point.getKeyExternally(y, x))
                 ) {
                     // If we are rebuilding route because of conflict with some animal
                     if (detectAnimals && this.field[y][x] === type.animal) {
@@ -257,7 +260,7 @@ class CollectiveMind {
                     }
 
                     targets.push(new Target(y, x, target));
-                    this.usedFields[Point.getKeyExternally(y, x)] = true;
+                    this.usedFields.set(Point.getKeyExternally(y, x), true);
                 }
             }
         }

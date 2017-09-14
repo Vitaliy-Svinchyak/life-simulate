@@ -1,3 +1,5 @@
+"use strict";
+
 class GameFieldGenerator {
 
     gameMap(rows, cells) {
@@ -44,7 +46,6 @@ class GameFieldGenerator {
         this.field[1][this.field[0].length - 2] = type.animal;
         this.field[this.field.length - 2][this.field[0].length - 2] = type.animal;
         this.field[this.field.length - 2][1] = type.animal;
-        console.log(this.field);
 
         return this.field;
     }

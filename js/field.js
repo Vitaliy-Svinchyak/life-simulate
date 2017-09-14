@@ -1,3 +1,5 @@
+"use strict";
+
 /**
  * @property {Animal[]} animals                 - all animals of the field
  * @property {CollectiveMind} collectiveMind

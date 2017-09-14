@@ -1,9 +1,7 @@
 body {
     margin: 0;
     height: 100vh;
-    overflow: hidden;
-}
-
-#canvas-field {
-    background-color: #d7deb3;
+    overflow: scroll;
+    padding: 4px;
+    background-color: rgb(184, 193, 139);
 }

@@ -1,3 +1,5 @@
+"use strict";
+
 const animalStrategy = {
     RAND: 1,
     OWN_HISTORY: 2,
@@ -53,6 +55,7 @@ class Animal {
                 return this.goTo(point, field);
             }
         }
+
         this.stop();
 
         return null;
