@@ -129,12 +129,15 @@ class Painter {
     }
 
     setCanvasSize() {
+        const w = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
+        const h = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
+
         let height = (this.pointSize.y + 1) * this.fieldMap.fieldSize.rows;
         let width = (this.pointSize.x + 1) * this.fieldMap.fieldSize.cells;
 
-        if (height < window.innerHeight || width < window.innerWidth) {
-            height = window.innerHeight;
-            width = window.innerWidth;
+        if (height < h && width < w) {
+            height = h;
+            width = w;
             document.body.style.overflow = 'hidden';
         }
 

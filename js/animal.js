@@ -56,7 +56,9 @@ class Animal {
             }
         }
 
-        this.stop();
+        if (!variantsToGo.length && !this.isPaused()) {
+            this.stop();
+        }
 
         return null;
     }
@@ -166,22 +168,43 @@ class Animal {
      * @returns {Point[]}
      */
     getPossiblePointsToGo(field) {
-        const variants = [];
+        const check = (considerAnimals) => {
+            const variants = [];
 
-        for (let y = this.y - 1; y <= this.y + 1; y++) {
-            const yMap = field.get(y);
-            for (let x = this.x - 1; x <= this.x + 1; x++) {
-                if (solidObjects.indexOf(yMap.get(x)) === -1
-                    && yMap.get(x) !== type.animal
-                    // can't walk diagonally
-                    && (x !== this.x ^ y !== this.y)
-                ) {
-                    variants.push({x: x, y: y});
+            for (let y = this.y - 1; y <= this.y + 1; y++) {
+                const yMap = field.get(y);
+
+                for (let x = this.x - 1; x <= this.x + 1; x++) {
+                    if (solidObjects.indexOf(yMap.get(x)) === -1
+                        // can't walk diagonally
+                        && (x !== this.x ^ y !== this.y)
+                    ) {
+                        if (considerAnimals && yMap.get(x) === type.animal) {
+                            continue;
+                        }
+
+                        variants.push({x: x, y: y});
+
+                    }
                 }
+            }
+
+            return variants;
+        };
+
+        let variantsToGo = check(true);
+
+
+        if (!variantsToGo.length) {
+            variantsToGo = check(false);
+
+            if (variantsToGo.length) {
+                this.pause(1);
+                variantsToGo = [];
             }
         }
 
-        return variants;
+        return variantsToGo;
     }
 
     /**
