@@ -2,12 +2,11 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <meta http-equiv="x-ua-compatible" content="ie=edge">
   <title>Life</title>
   <meta name="description" content="">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="css/main.css">
-  <link rel="preload" href="images/wall.png" as="image">
+  <link rel="preload" href="images/rock.png" as="image">
   <link rel="preload" href="images/human.png" as="image">
   <link rel="preload" href="images/tree.png" as="image">
   <link rel="preload" href="images/water.png" as="image">
@@ -20,10 +19,14 @@
 <script src="js/functions.js"></script>
 <script src="js/point.js"></script>
 <script src="js/target.js"></script>
+<script src="js/game_objects/empty.js"></script>
+<script src="js/game_objects/rock.js"></script>
+<script src="js/game_objects/tree.js"></script>
 <script src="js/map_generator.js"></script>
 <script src="js/game_field_generator.js"></script>
 <script src="js/collective_mind.js"></script>
-<script src="js/animal.js"></script>
+<script src="js/game_objects/animal.js"></script>
+<script src="js/game_objects/human.js"></script>
 <script src="js/painter.js"></script>
 <script src="js/field.js"></script>
 
@@ -31,7 +34,7 @@
     setTimeout(() => {
         const size = getFullScreenSize();
 
-        window.gameField = new Field(gameFieldGenerator.gameMap(size.y, size.x));
+        window.gameField = new Field(gameFieldGenerator.gameMap(35, 35));
 //        window.gameField = new Field(gameFieldGenerator.gameMap(200, 200));
         //    window.gameField.start();
     }, 0);

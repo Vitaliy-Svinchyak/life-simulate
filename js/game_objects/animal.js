@@ -2,32 +2,31 @@
 
 const animalStrategy = {
     RAND: 1,
-    OWN_HISTORY: 2,
-    COLLECTIVE_MIND_HISTORY: 3
+    OWN_HISTORY: 2
 };
 
 /**
  * @property {int} strategy     - strategy of moving
- * @property {int} y            - current row number of animal
- * @property {int} x            - current column number of animal
+ * @property {int} y            - current row number of human
+ * @property {int} x            - current column number of human
  * @property {int} id           - for uniqueness
- * @property {boolean} cantGo   - if true animal will skip all his steps
+ * @property {boolean} cantGo   - if true human will skip all his steps
  * @property {int} paused       - how much steps need to wait until can go
- * @property {Target} target    - current target of animal
+ * @property {Target} target    - current target of human
  * @property {{}} previousSteps - history of steps
  * @property {CollectiveMind} collectiveMind
  */
-class Animal {
+class Animal extends Point {
     /**
-     * @param {int} y                   - current row number of animal
-     * @param {int} x                   - current column number of animal
+     * @param {int} y                   - current row number of human
+     * @param {int} x                   - current column number of human
      * @param {CollectiveMind} collectiveMind
      * @param {int} id                  - for uniqueness
      */
     constructor(y, x, collectiveMind, id) {
-        this.strategy = animalStrategy.COLLECTIVE_MIND_HISTORY;
-        this.y = +y;
-        this.x = +x;
+        super(y, x);
+        this.type = type.human;
+        this.strategy = animalStrategy.RAND;
         this.id = id;
         this.cantGo = false;
         this.paused = 0;
@@ -84,7 +83,7 @@ class Animal {
         field.get(this.y).set(this.x, type.track);
         this.x = point.x;
         this.y = point.y;
-        field.get(this.y).set(this.x, type.animal);
+        field.get(this.y).set(this.x, type.human);
 
         return move;
     }
@@ -107,9 +106,6 @@ class Animal {
             switch (this.strategy) {
                 case animalStrategy.OWN_HISTORY:
                     this.previousSteps[stepKey] = true;
-                    break;
-                case animalStrategy.COLLECTIVE_MIND_HISTORY:
-                    this.collectiveMind.addStepToHistory(stepKey);
                     break;
                 default:
                     break;
@@ -141,9 +137,6 @@ class Animal {
                     }
                 }
                 break;
-            case animalStrategy.COLLECTIVE_MIND_HISTORY:
-                filteredVariants = this.collectiveMind.getVariants(variantsToGo, this);
-                break;
             default:
                 console.error('Unknown strategy');
                 this.stop();
@@ -155,10 +148,10 @@ class Animal {
 
     //noinspection FunctionWithMultipleLoopsJS
     /**
-     * Returns an array of nearby points(radius = 1) where the current animal can go.
+     * Returns an array of nearby points(radius = 1) where the current human can go.
      * Animal can't go to the point if:
-     *      - Point is a wall
-     *      - Point is an animal
+     *      - Point is a rock
+     *      - Point is an human
      * Animal can't walk diagonally. Only left, right, up, down
      *
      * @param {Map} field
@@ -172,7 +165,7 @@ class Animal {
             const yMap = field.get(y);
             for (let x = this.x - 1; x <= this.x + 1; x++) {
                 if (solidObjects.indexOf(yMap.get(x)) === -1
-                    && yMap.get(x) !== type.animal
+                    && yMap.get(x) !== type.human
                     // can't walk diagonally
                     && (x !== this.x ^ y !== this.y)
                 ) {
@@ -201,7 +194,7 @@ class Animal {
     }
 
     /**
-     * Pause animal on some count of steps
+     * Pause human on some count of steps
      *
      * @param {int} steps
      */
@@ -210,7 +203,7 @@ class Animal {
     }
 
     /**
-     * Stop current animal for all future steps
+     * Stop current human for all future steps
      */
     stop() {
         this.cantGo = true;

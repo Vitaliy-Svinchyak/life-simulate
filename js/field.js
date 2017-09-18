@@ -1,7 +1,7 @@
 "use strict";
 
 /**
- * @property {Animal[]} animals                 - all animals of the fieldMap
+ * @property {Human[]} humans                 - all humans of the fieldMap
  * @property {CollectiveMind} collectiveMind
  * @property {HTMLTextAreaElement} textarea     - where we draw everything
  * @property {[[Point]]} fieldMap
@@ -21,31 +21,10 @@ class Field {
         this.fieldMap = fieldMap;
         this.detectFieldSize();
         this.painter = new Painter(document.querySelector('#canvas-field'), this);
-        this.colectiveMind = new CollectiveMind(this);
-        this.detectAnimals();
+        this.collectiveMind = new CollectiveMind(this);
+        this.detectHumans();
         this.draw();
-    }
-
-    getCoveragePercent(steps) {
-        let emptyFields = 0;
-        let visitedFields = 0;
-
-        for (const [key, row] of this.fieldMap) {
-            for (const [key, symbol] of row) {
-                if (symbol === type.empty) {
-                    emptyFields++;
-                }
-
-                if (~[type.track, type.animal].indexOf(symbol)) {
-                    visitedFields++;
-                }
-            }
-        }
-
-        const totalCount = emptyFields + visitedFields;
-        const percent = Math.floor(visitedFields / totalCount * 100);
-
-        console.info(`${percent}% - ${steps} steps`);
+        this.collectiveMind.setHumans(this.humans);
     }
 
     /**
@@ -66,18 +45,18 @@ class Field {
     }
 
     /**
-     * Find all animals on the fieldMap and create objects for them
+     * Find all humans on the fieldMap and create objects for them
      */
-    detectAnimals() {
+    detectHumans() {
         let id = 0;
-        this.animals = [];
+        this.humans = [];
 
         for (let y = 0; y < this.fieldSize.rows; y++) {
             const yMap = this.fieldMap.get(y);
 
             for (let x = 0; x < this.fieldSize.cells; x++) {
-                if (yMap.get(x) === type.animal) {
-                    this.animals.push(new Animal(y, x, this.colectiveMind, id));
+                if (yMap.get(x) === type.human) {
+                    this.humans.push(new Human(y, x, this.collectiveMind, id));
                     id++;
                 }
             }
@@ -88,10 +67,9 @@ class Field {
      * Start the game and statistic Interval
      */
     start() {
-        let stepsCount = 0;
         const startInterval = setInterval(
             () => {
-                stepsCount = this.makeSteps(stepsCount);
+                this.makeSteps();
                 this.draw();
 
                 if (!this.hasEmptyFields()) {
@@ -101,46 +79,20 @@ class Field {
             },
             stepSpeed
         );
-
-        const infoInterval = setInterval(
-            () => {
-                this.getCoveragePercent(stepsCount);
-
-                if (!this.hasEmptyFields()) {
-                    clearInterval(infoInterval);
-                }
-            },
-            statisticSpeed
-        );
     }
 
     /**
-     * Make step for all animals
-     *
-     * @param {int} stepsCount
-     *
-     * @return {int}
+     * Make step for all humans
      */
-    makeSteps(stepsCount) {
-        this.movesOnThisStep = [];
-
-        for (const animal of this.animals) {
-            const animalStep = animal.step(this.fieldMap);
-
-            if (animalStep) {
-                stepsCount++;
-                this.movesOnThisStep.push(animalStep);
-            }
-        }
-
-        return stepsCount;
+    makeSteps() {
+        this.movesOnThisStep = this.collectiveMind.step();
     }
 
     /**
      * @return {boolean}
      */
     hasEmptyFields() {
-        return this.animals.filter(a => a.canGo()).length > 0;
+        return this.humans.filter(a => a.canGo()).length > 0;
     }
 
     /**
@@ -157,12 +109,12 @@ class Field {
     /**
      * @param {Point} coordinate
      *
-     * @returns {Animal|null}
+     * @returns {Human|null}
      */
-    detectAnimalByCoordinates(coordinate) {
-        for (const animal of this.animals) {
-            if (animal.y === coordinate.y && animal.x === coordinate.x) {
-                return animal;
+    detectHumanByCoordinates(coordinate) {
+        for (const human of this.humans) {
+            if (human.y === coordinate.y && human.x === coordinate.x) {
+                return human;
             }
         }
 

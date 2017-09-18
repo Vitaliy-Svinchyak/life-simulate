@@ -12,7 +12,7 @@ class Painter {
         this.setCanvasSize();
 
         this.wallImg = new Image();
-        this.wallImg.src = 'images/wall.png';
+        this.wallImg.src = 'images/rock.png';
         this.treeImg = new Image();
         this.treeImg.src = 'images/tree.png';
         this.humanImg = new Image();
@@ -57,11 +57,11 @@ class Painter {
             const yMap = this.fieldMap.fieldMap.get(y);
 
             for (let x = 0; x < this.fieldMap.fieldSize.cells; x++) {
-                if (yMap.get(x) === type.wall) {
+                if (yMap.get(x) === type.rock) {
                     this.drawWall(xDraw, yDraw);
                 } else if (yMap.get(x) === type.tree) {
                     this.drawTree(xDraw, yDraw);
-                } else if (yMap.get(x) === type.animal) {
+                } else if (yMap.get(x) === type.human) {
                     this.drawHuman(xDraw, yDraw);
                 }
                 xDraw += this.pointSize.x + this.pointSize.margin;

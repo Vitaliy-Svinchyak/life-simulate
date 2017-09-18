@@ -11,12 +11,12 @@ class GameFieldGenerator {
             const yMap = this.fieldMap.get(y);
             for (let x = 0; x <= cells; x++) {
                 if (y === 0 || y === rows || x === 0 || x === cells) {
-                    item = type.wall;
+                    item = type.rock;
                 } else {
                     const rand = getRandomInt(0, 20);
                     switch (rand) {
                         case 3:
-                            this.generateChain(y, x, type.wall);
+                            this.generateChain(y, x, type.rock);
                             break;
                         case 4:
                             this.generateChain(y, x, type.tree);
@@ -28,10 +28,10 @@ class GameFieldGenerator {
                 }
             }
         }
-        this.fieldMap.get(1).set(1, type.animal);
-        this.fieldMap.get(1).set(this.fieldMap.get(0).size - 2, type.animal);
-        this.fieldMap.get(this.fieldMap.size - 2).set(this.fieldMap.get(0).size - 2, type.animal);
-        this.fieldMap.get(this.fieldMap.size - 2).set(1, type.animal);
+        this.fieldMap.get(1).set(1, type.human);
+        this.fieldMap.get(1).set(this.fieldMap.get(0).size - 2, type.human);
+        this.fieldMap.get(this.fieldMap.size - 2).set(this.fieldMap.get(0).size - 2, type.human);
+        this.fieldMap.get(this.fieldMap.size - 2).set(1, type.human);
 
         return this.fieldMap;
     }
