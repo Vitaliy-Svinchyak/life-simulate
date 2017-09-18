@@ -1,14 +1,14 @@
 "use strict";
 const type = {
-    wall: '■',
-    animal: 'o',
+    rock: '■',
+    human: 'o',
     tree: '֏',
     empty: ' ',
     track: 'x',
     route: 'w'
 };
 
-const solidObjects = [type.wall, type.tree];
+const solidObjects = [type.rock, type.tree];
 
 const stepSpeed = 0;
 const statisticSpeed = 1000;
