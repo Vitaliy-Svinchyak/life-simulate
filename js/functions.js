@@ -23,3 +23,14 @@ function getFullScreenSize() {
         y: Math.floor(window.innerHeight / 9) - 2,
     };
 }
+
+/**
+ *
+ * @param {int} x
+ * @param {int} min
+ * @param {int} max
+ * @returns {boolean}
+ */
+function inRange(x, min, max) {
+    return x >= min && x <= max;
+}
