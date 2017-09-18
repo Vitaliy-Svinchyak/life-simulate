@@ -16,17 +16,28 @@
 <body>
 <canvas id="canvas-field"></canvas>
 
+<script src="js/service_locator.js"></script>
+
 <script src="js/functions.js"></script>
 <script src="js/point.js"></script>
 <script src="js/target.js"></script>
+
+<script src="js/map_generator.js"></script>
+<script src="js/game_field_generator.js"></script>
+
+<script src="js/game_strategy/resource_register.js"></script>
+<script src="js/game_strategy/collective_mind.js"></script>
+
 <script src="js/game_objects/empty.js"></script>
 <script src="js/game_objects/rock.js"></script>
 <script src="js/game_objects/tree.js"></script>
-<script src="js/map_generator.js"></script>
-<script src="js/game_field_generator.js"></script>
-<script src="js/collective_mind.js"></script>
 <script src="js/game_objects/animal.js"></script>
 <script src="js/game_objects/human.js"></script>
+
+<script src="js/game_logic/tasks/task_interface.js"></script>
+<script src="js/game_logic/tasks/go_to.js"></script>
+<script src="js/game_logic/game_logic.js"></script>
+
 <script src="js/painter.js"></script>
 <script src="js/field.js"></script>
 
@@ -35,6 +46,8 @@
         const size = getFullScreenSize();
 
         window.gameField = new Field(gameFieldGenerator.gameMap(35, 35));
+        window.serviceLocator.register('Field', window.gameField);
+        window.gameField.init();
 //        window.gameField = new Field(gameFieldGenerator.gameMap(200, 200));
         //    window.gameField.start();
     }, 0);
