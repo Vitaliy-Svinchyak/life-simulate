@@ -29,9 +29,9 @@ class GameFieldGenerator {
             }
         }
         this.fieldMap.get(1).set(1, type.human);
-        this.fieldMap.get(1).set(this.fieldMap.get(0).size - 2, type.human);
-        this.fieldMap.get(this.fieldMap.size - 2).set(this.fieldMap.get(0).size - 2, type.human);
-        this.fieldMap.get(this.fieldMap.size - 2).set(1, type.human);
+        // this.fieldMap.get(1).set(this.fieldMap.get(0).size - 2, type.human);
+        // this.fieldMap.get(this.fieldMap.size - 2).set(this.fieldMap.get(0).size - 2, type.human);
+        // this.fieldMap.get(this.fieldMap.size - 2).set(1, type.human);
 
         return this.fieldMap;
     }

@@ -56,7 +56,7 @@ class Field {
 
             for (let x = 0; x < this.fieldSize.cells; x++) {
                 if (yMap.get(x) === type.human) {
-                    this.humans.push(new Human(y, x, this.collectiveMind, id));
+                    this.humans.push(new Human(y, x, id, this.collectiveMind));
                     id++;
                 }
             }

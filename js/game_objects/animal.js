@@ -14,25 +14,26 @@ const animalStrategy = {
  * @property {int} paused       - how much steps need to wait until can go
  * @property {Target} target    - current target of human
  * @property {{}} previousSteps - history of steps
- * @property {CollectiveMind} collectiveMind
  */
 class Animal extends Point {
     /**
      * @param {int} y                   - current row number of human
      * @param {int} x                   - current column number of human
-     * @param {CollectiveMind} collectiveMind
      * @param {int} id                  - for uniqueness
      */
-    constructor(y, x, collectiveMind, id) {
+    constructor(y, x, id) {
         super(y, x);
-        this.type = type.human;
         this.strategy = animalStrategy.RAND;
         this.id = id;
         this.cantGo = false;
         this.paused = 0;
         this.target = null;
         this.previousSteps = {};
-        this.collectiveMind = collectiveMind;
+        this.init();
+    }
+
+    init() {
+        this.type = type.animal;
     }
 
     /**
@@ -49,10 +50,7 @@ class Animal extends Point {
 
         if (variantsToGo.length) {
             const point = this.selectVariantTogo(variantsToGo);
-
-            if (this.isValidPoint(point)) {
-                return this.goTo(point, field);
-            }
+            return this.goTo(point, field);
         }
 
         this.stop();
@@ -69,6 +67,10 @@ class Animal extends Point {
      * @return {{}}
      */
     goTo(point, field) {
+        if (!window.gameLogic.animalCanGoTo(this, point)) {
+            return {};
+        }
+
         const move = {
             from: {
                 y: this.y,
@@ -80,11 +82,10 @@ class Animal extends Point {
             }
         };
 
-        field.get(this.y).set(this.x, type.track);
+        field.get(this.y).set(this.x, type.empty);
         this.x = point.x;
         this.y = point.y;
         field.get(this.y).set(this.x, type.human);
-
         return move;
     }
 
@@ -214,32 +215,5 @@ class Animal extends Point {
      */
     isPaused() {
         return this.paused > 0;
-    }
-
-    /**
-     * Checks if point exists and is not a teleport (in reach)
-     *
-     * @param {Point} point
-     *
-     * @returns {boolean}
-     */
-    isValidPoint(point) {
-        if (!point) {
-            return false;
-        }
-
-        if (Math.abs(this.y + this.x - point.y - point.x) > 1) {
-            console.error(JSON.stringify([this.y, this.x]), JSON.stringify([point.y, point.x]));
-            console.error(JSON.stringify(this.target));
-            console.error('WOW!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
-
-            return false;
-        }
-
-        return true;
-    }
-
-    clearTarget() {
-        this.target = null;
     }
 }

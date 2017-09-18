@@ -2,6 +2,7 @@
 const type = {
     rock: '■',
     human: 'o',
+    animal: 'p',
     tree: '֏',
     empty: ' ',
     track: 'x',
@@ -10,8 +11,7 @@ const type = {
 
 const solidObjects = [type.rock, type.tree];
 
-const stepSpeed = 0;
-const statisticSpeed = 1000;
+const stepSpeed = 1000;
 
 function getRandomInt(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;

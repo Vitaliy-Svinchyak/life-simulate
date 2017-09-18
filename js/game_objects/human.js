@@ -1,4 +1,38 @@
+/**
+ * @property {CollectiveMind} collectiveMind
+ * @property {string} type
+ * @property {Task} task
+ */
 class Human extends Animal {
+
+    constructor(y, x, id, collectiveMind) {
+        super(y, x, id);
+        this.collectiveMind = collectiveMind;
+    }
+
+    init() {
+        this.type = type.human;
+        this.inHands = null;
+        this.task = null;
+    }
+
+    /**
+     * @param {Task} task
+     */
+    setTask(task) {
+        this.task = task;
+    }
+
+    /**
+     * @param {Map} field
+     */
+    step(field) {
+        if (!this.task) {
+            this.task = this.collectiveMind.getTask(this);
+        }
+
+        return this.task.execute(this);
+    }
 
     /**
      * Selects one of the points based on current move strategy

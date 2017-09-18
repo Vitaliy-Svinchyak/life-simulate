@@ -59,25 +59,25 @@ class CollectiveMind {
     }
 
     /**
-     * @param {Point[]} variants
      * @param {Human} human
-     * @returns {Point[]}
      */
-    getVariants(variants, human) {
+    getTask(human) {
+        const target = this.getTarget(human, type.tree);
+
+        return new GoTo(target);
+    }
+
+    /**
+     * @param {Human} human
+     * @param {string} type
+     *
+     * @returns {Target}
+     */
+    getTarget(human, type) {
+        const variants = human.getPossiblePointsToGo(this.fieldMap);
         this.human = human;
-        const filteredVariants = variants.filter(v => !this.stepsHistory.has(Point.getKeyExternally(v.y, v.x)));
-        let resultVariants;
 
-        // if have nearby empty fields
-        if (filteredVariants.length) {
-            resultVariants = filteredVariants;
-            // delete current target to avoid teleportation
-            this.clearHumanTarget();
-        } else {
-            resultVariants = this.filterVariantsByNearbyEmptyFields(variants);
-        }
-
-        return resultVariants;
+        return this.createTargetForHuman([human], type);
     }
 
     /**
@@ -155,49 +155,41 @@ class CollectiveMind {
      * Finds and builds route to the nearest not booked empty fieldMap
      *
      * @param {Target[]|Point[]} currentPositions
+     * @param {string} typeOfField
      *
-     * @returns {void}
+     * @returns {Target}
      */
-    createTargetForHuman(currentPositions) {
+    createTargetForHuman(currentPositions, typeOfField) {
         let founded = false;
         let routeVariant;
         let nextPositions = [];
-        const humanTarget = this.human.target;
         let buildRouteWithHumanDetection = false;
 
         // Check already built route in cache
-        if (humanTarget && this.fieldMap.get(humanTarget.y).get(humanTarget.x) === type.empty) {
-            // Check if some human obstructs the passage
-            buildRouteWithHumanDetection = this.isConflict();
+        // if (humanTarget && this.fieldMap.get(humanTarget.y).get(humanTarget.x) === type.empty) {
+        //     // Check if some human obstructs the passage
+        //     buildRouteWithHumanDetection = this.isConflict();
+        //
+        //     if (!buildRouteWithHumanDetection) {
+        //         return;
+        //     }
+        // }
 
-            if (!buildRouteWithHumanDetection) {
-                return;
-            }
-        }
-
-        this.clearHumanTarget();
+        // this.clearHumanTarget();
         this.usedFields = new Map();
 
         while (founded !== true) {
             // Checks all variants of all variants to go
             for (const currentPosition of currentPositions) {
-                const nextPositionsForCurrentPosition = this.getPossibleTargetsToGo(currentPosition, buildRouteWithHumanDetection);
-                const goodPositions = nextPositionsForCurrentPosition
-                    .filter(p => this.fieldMap.get(p.y).get(p.x) === type.empty); // filter by emptiness
+                let nextPositionsForCurrentPosition = this.getPossibleTargetsToGo(currentPosition, buildRouteWithHumanDetection);
+                let goodPositions = nextPositionsForCurrentPosition
+                    .filter(p => this.fieldMap.get(p.y).get(p.x) === typeOfField); // filter by target type
 
-                // filter by booking
-                const goodPositionsWithoutBooked = goodPositions.filter(p => !this.bookedFields[Point.getKeyExternally(p.y, p.x)]);
-
-                const rebookedRoute = this.pickUpFieldToTheNearestHuman(goodPositionsWithoutBooked, goodPositions);
-                if (rebookedRoute) {
-                    routeVariant = rebookedRoute;
-                    founded = true;
-                    break;
-                }
-
-                // just taking first variant (in most cases it will be just 1 here)
-                if (goodPositionsWithoutBooked.length) {
-                    routeVariant = goodPositionsWithoutBooked[0];
+                if (!goodPositions.length) {
+                    nextPositionsForCurrentPosition = nextPositionsForCurrentPosition
+                        .filter(p => this.fieldMap.get(p.y).get(p.x) === type.empty);
+                } else {
+                    routeVariant = goodPositions[0];
                     founded = true;
                     break;
                 }
@@ -218,46 +210,10 @@ class CollectiveMind {
         if (routeVariant) {
             // Because there is a big tree of hierarchy here, we don't want this useless object to use our memory
             delete routeVariant.parent;
+            // this.bookedFields[Point.getKeyExternally(routeVariant.y, routeVariant.x)] = this.human;
 
-            this.bookedFields[Point.getKeyExternally(routeVariant.y, routeVariant.x)] = this.human;
-            this.human.target = routeVariant;
+            return routeVariant;
         }
-    }
-
-    pickUpFieldToTheNearestHuman(goodPositionsWithoutBooked, goodPositions) {
-        if (goodPositionsWithoutBooked.length === goodPositions.length) {
-            return false;
-        }
-
-        let bookedFields = [];
-
-        for (const route of goodPositions) {
-            if (this.bookedFields[Point.getKeyExternally(route.y, route.x)]) {
-                bookedFields.push(route);
-            }
-        }
-
-        if (!bookedFields.length) {
-            return false;
-        }
-
-        for (const bookedField of bookedFields) {
-            const currentHumanRouteLength = bookedField.route.split('->').length;
-            bookedField.owner = this.bookedFields[Point.getKeyExternally(bookedField.y, bookedField.x)];
-            const ownerRouteLength = bookedField.owner.target.route.split('->').length;
-            bookedField.gain = ownerRouteLength - currentHumanRouteLength;
-        }
-
-        bookedFields = bookedFields.sort((a, b) => b.gain - a.gain);
-
-        if (bookedFields[0].gain > 0) {
-            delete bookedFields[0].owner.target;
-            delete bookedFields[0].owner;
-
-            return bookedFields[0];
-        }
-
-        return false;
     }
 
     /**
@@ -275,9 +231,7 @@ class CollectiveMind {
             for (let x = target.x - 1; x <= target.x + 1; x++) {
                 if (
                     (x !== target.x ^ y !== target.y)
-                    && solidObjects.indexOf(this.fieldMap.get(y).get(x)) === -1
                     // A big optimization, we don't want to go where there was already one of our routes
-                    // && !this.usedFields[Point.getKeyExternally(y, x)]
                     && !this.usedFields.has(Point.getKeyExternally(y, x))
                 ) {
                     // If we are rebuilding route because of conflict with some human
@@ -317,7 +271,7 @@ class CollectiveMind {
     }
 
     clearHumanTarget() {
-        const humanTarget = this.human.target;
+        const humanTarget = this.human.task.target;
 
         if (humanTarget) {
             this.bookedFields[Point.getKeyExternally(humanTarget.y, humanTarget.x)] = false;
