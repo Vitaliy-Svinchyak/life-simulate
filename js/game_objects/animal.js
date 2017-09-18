@@ -29,6 +29,7 @@ class Animal extends Point {
         this.paused = 0;
         this.target = null;
         this.previousSteps = {};
+        this.gameLogic = window.serviceLocator.get(GameLogic);
         this.init();
     }
 
@@ -67,7 +68,7 @@ class Animal extends Point {
      * @return {{}}
      */
     goTo(point, field) {
-        if (!window.gameLogic.animalCanGoTo(this, point)) {
+        if (!this.gameLogic.animalCanGoTo(this, point)) {
             return {};
         }
 

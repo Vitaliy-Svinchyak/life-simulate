@@ -1,7 +1,7 @@
 /**
  * @property {CollectiveMind} collectiveMind
  * @property {string} type
- * @property {Task} task
+ * @property {Task[]} tasks
  */
 class Human extends Animal {
 
@@ -13,7 +13,7 @@ class Human extends Animal {
     init() {
         this.type = type.human;
         this.inHands = null;
-        this.task = null;
+        this.tasks = [];
     }
 
     /**
@@ -27,16 +27,24 @@ class Human extends Animal {
      * @param {Map} field
      */
     step(field) {
-        if (!this.task) {
-            this.task = this.collectiveMind.getTask(this);
+        if (this.tasks.length === 0) {
+            this.tasks = this.collectiveMind.getTasks(this);
         }
 
-        return this.task.execute(this);
+        this.clearTasks();
+
+        const result = this.tasks[0].execute(this);
+
+        this.clearTasks();
+
+        return result;
+    }
+
+    clearTasks() {
+        this.tasks = this.tasks.filter(t => !t.isFinished());
     }
 
     /**
-     * Selects one of the points based on current move strategy
-     *
      * @param {Point[]} variantsToGo
      *
      * @returns {Point}

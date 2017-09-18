@@ -11,7 +11,7 @@ const type = {
 
 const solidObjects = [type.rock, type.tree];
 
-const stepSpeed = 1000;
+const stepSpeed = 100;
 
 function getRandomInt(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;

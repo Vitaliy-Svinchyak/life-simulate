@@ -7,12 +7,9 @@
 class CollectiveMind {
     constructor(field) {
         this.fieldMap = field.fieldMap;
+        this.resourcesRegister = window.serviceLocator.get(ResourcesRegister);
         this.fieldClass = field;
-        this.deadFields = {};
         this.usedFields = new Map();
-        this.bookedFields = {};
-        this.stepsHistory = new Map();
-        this.parseHistory();
     }
 
     /**
@@ -37,34 +34,14 @@ class CollectiveMind {
     }
 
     /**
-     * For test purposes
-     */
-    parseHistory() {
-        for (let rowI = 0; rowI < this.fieldClass.fieldSize.rows; rowI++) {
-            const yMap = this.fieldMap.get(rowI);
-
-            for (let cellI = 0; cellI < this.fieldClass.fieldSize.cells; cellI++) {
-                if (yMap.get(cellI) === type.track) {
-                    this.stepsHistory.set(Point.getKeyExternally(rowI, cellI), true);
-                }
-            }
-        }
-    }
-
-    /**
-     * @param {string} step
-     */
-    addStepToHistory(step) {
-        this.stepsHistory.set(step, true);
-    }
-
-    /**
      * @param {Human} human
+     *
+     * @returns {Task[]}
      */
-    getTask(human) {
+    getTasks(human) {
         const target = this.getTarget(human, type.tree);
 
-        return new GoTo(target);
+        return [new GoTo(target)];
     }
 
     /**
@@ -74,81 +51,9 @@ class CollectiveMind {
      * @returns {Target}
      */
     getTarget(human, type) {
-        const variants = human.getPossiblePointsToGo(this.fieldMap);
         this.human = human;
 
-        return this.createTargetForHuman([human], type);
-    }
-
-    /**
-     * Finds empty fields in bigger range and decides how to go there
-     * @param {Point[]}variants
-     * @returns {Point[]}
-     */
-    filterVariantsByNearbyEmptyFields(variants) {
-        const selectedVariants = this.filterVariantsByDeadFields(variants);
-
-        if (selectedVariants.length) {
-            return this.buildRouteToNearbyField(selectedVariants);
-        }
-
-        // humans can be freezed when several of them are in tunnel, this fixed it
-        return this.buildRouteToNearbyField(variants);
-    }
-
-    /**
-     *  If from the current position there is only one exit - current position is dead.
-     *  If after filtering all exits from current position there is only one exit - current position is dead.
-     *
-     * @param {Point[]} variants
-     * @returns {Point[]}
-     */
-    filterVariantsByDeadFields(variants) {
-        if (variants.length === 1) {
-            this.rememberCurrentPositionAsDead();
-        }
-
-        const variantsWithoutDeadFields = variants.filter(v => !this.deadFields[Point.getKeyExternally(v.y, v.x)]);
-
-        if (variantsWithoutDeadFields.length <= 1) {
-            this.rememberCurrentPositionAsDead();
-        }
-
-        return variantsWithoutDeadFields;
-    }
-
-    /**
-     * Returns a best variant to go, which will lead to the nearest empty fieldMap
-     * @param {Point[]} variants
-     * @returns {*} next variant to go
-     */
-    buildRouteToNearbyField(variants) {
-        if (!variants.length) {
-            return [];
-        }
-
-        let nextStep;
-        let routeVariant;
-        let currentPositions = variants;
-
-        // Generating route history for current variants
-        currentPositions = currentPositions.map(p => new Target(p.y, p.x, {x: this.human.x, y: this.human.y}));
-        this.createTargetForHuman(currentPositions);
-
-        if (this.human.target) {
-            routeVariant = this.human.target;
-            nextStep = this.human.target.getNextStep();
-        } else {
-            return [];
-        }
-
-        routeVariant.afterStep();
-
-        if (routeVariant.isPenultimateRun()) {
-            this.clearHumanTarget();
-        }
-
-        return [nextStep];
+        return this.createTargetForHuman([new Point(human.y, human.x)], type);
     }
 
     /**
@@ -157,25 +62,13 @@ class CollectiveMind {
      * @param {Target[]|Point[]} currentPositions
      * @param {string} typeOfField
      *
-     * @returns {Target}
+     * @returns {Target|null}
      */
     createTargetForHuman(currentPositions, typeOfField) {
         let founded = false;
         let routeVariant;
         let nextPositions = [];
         let buildRouteWithHumanDetection = false;
-
-        // Check already built route in cache
-        // if (humanTarget && this.fieldMap.get(humanTarget.y).get(humanTarget.x) === type.empty) {
-        //     // Check if some human obstructs the passage
-        //     buildRouteWithHumanDetection = this.isConflict();
-        //
-        //     if (!buildRouteWithHumanDetection) {
-        //         return;
-        //     }
-        // }
-
-        // this.clearHumanTarget();
         this.usedFields = new Map();
 
         while (founded !== true) {
@@ -200,7 +93,7 @@ class CollectiveMind {
             // if no empty fields
             if (!nextPositions.length && !routeVariant) {
                 this.human.stop();
-                return;
+                return null;
             }
 
             currentPositions = nextPositions;
@@ -210,7 +103,6 @@ class CollectiveMind {
         if (routeVariant) {
             // Because there is a big tree of hierarchy here, we don't want this useless object to use our memory
             delete routeVariant.parent;
-            // this.bookedFields[Point.getKeyExternally(routeVariant.y, routeVariant.x)] = this.human;
 
             return routeVariant;
         }
@@ -268,18 +160,5 @@ class CollectiveMind {
         }
 
         return false;
-    }
-
-    clearHumanTarget() {
-        const humanTarget = this.human.task.target;
-
-        if (humanTarget) {
-            this.bookedFields[Point.getKeyExternally(humanTarget.y, humanTarget.x)] = false;
-            this.human.clearTarget();
-        }
-    }
-
-    rememberCurrentPositionAsDead() {
-        this.deadFields[Point.getKeyExternally(this.human.y, this.human.x)] = true;
     }
 }

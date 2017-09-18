@@ -19,9 +19,12 @@ class Field {
         }
 
         this.fieldMap = fieldMap;
+    }
+
+    init() {
         this.detectFieldSize();
-        this.painter = new Painter(document.querySelector('#canvas-field'), this);
-        this.collectiveMind = new CollectiveMind(this);
+        this.painter = window.serviceLocator.get(Painter);
+        this.collectiveMind = window.serviceLocator.get(CollectiveMind);
         this.detectHumans();
         this.draw();
         this.collectiveMind.setHumans(this.humans);
@@ -56,7 +59,8 @@ class Field {
 
             for (let x = 0; x < this.fieldSize.cells; x++) {
                 if (yMap.get(x) === type.human) {
-                    this.humans.push(new Human(y, x, id, this.collectiveMind));
+                    const human = window.serviceLocator.create('Human', [y, x, id]);
+                    this.humans.push(human);
                     id++;
                 }
             }

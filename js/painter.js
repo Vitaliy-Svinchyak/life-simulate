@@ -2,11 +2,10 @@
 
 class Painter {
     /**
-     * @param {HTMLCanvasElement} canvas
      * @param {Field} field
      */
-    constructor(canvas, field) {
-        this.canvas = canvas;
+    constructor(field) {
+        this.canvas = document.querySelector('#canvas-field');
         this.fieldMap = field;
         this.pointSize = this.calculatePointSize();
         this.setCanvasSize();
@@ -26,7 +25,7 @@ class Painter {
             for (const move of this.fieldMap.movesOnThisStep) {
                 const formYDraw = this.defaultY + (move.from.y * this.pointSize.y) + move.from.y;
                 const formXDraw = this.defaultX + (move.from.x * this.pointSize.x) + move.from.x;
-                this.drawTrack(formXDraw, formYDraw);
+                this.clearRect(formXDraw, formYDraw);
 
                 const yDraw = this.defaultY + (move.to.y * this.pointSize.y) + move.to.y;
                 const xDraw = this.defaultX + (move.to.x * this.pointSize.x) + move.to.x;
