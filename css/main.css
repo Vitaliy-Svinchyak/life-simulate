@@ -5,3 +5,12 @@ body {
     padding: 4px;
     background-color: rgb(184, 193, 139);
 }
+
+#modal {
+    display: none;
+}
+
+#modal textarea {
+    width: 100vw;
+    height: 100vh;
+}

@@ -19,6 +19,11 @@ class Field {
         }
 
         this.fieldMap = fieldMap;
+
+        if (debugMode) {
+            this.cloneMap();
+        }
+
         this.detectFieldSize();
         this.painter = new Painter(document.querySelector('#canvas-field'), this);
         this.collectiveMind = new CollectiveMind(this);
@@ -38,6 +43,38 @@ class Field {
         const rows = string.split('\n');
 
         return rows.map(s => s.split(''));
+    }
+
+    cloneMap() {
+        const map = [];
+
+        for (let y = 0; y < this.fieldMap.size; y++) {
+            const submapArr = [];
+            const submap = this.fieldMap.get(y);
+
+            for (let x = 0; x < submap.size; x++) {
+
+                submapArr.push(submap.get(x));
+            }
+
+            map.push(submapArr);
+        }
+
+        this.fieldMapOrigin = map;
+    }
+
+    exportMap() {
+        return this.fieldMapOrigin;
+    }
+
+    exportHistory() {
+        const history = [];
+
+        for (let human of this.collectiveMind.humans) {
+            history.push(human.history);
+        }
+
+        return history;
     }
 
     draw() {

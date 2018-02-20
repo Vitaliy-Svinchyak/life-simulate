@@ -1,17 +1,17 @@
 <!doctype html>
 <html>
 <head>
-  <meta charset="utf-8">
-  <title>Life</title>
-  <meta name="description" content="">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="css/main.css">
-  <link rel="preload" href="images/rock.png" as="image">
-  <link rel="preload" href="images/human.png" as="image">
-  <link rel="preload" href="images/tree.png" as="image">
-  <link rel="preload" href="images/water.png" as="image">
-  <link rel="preload" href="images/house.png" as="image">
-  <link rel="apple-touch-icon icon" href="images/house.png">
+    <meta charset="utf-8">
+    <title>Life</title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="preload" href="images/rock.png" as="image">
+    <link rel="preload" href="images/human.png" as="image">
+    <link rel="preload" href="images/tree.png" as="image">
+    <link rel="preload" href="images/water.png" as="image">
+    <link rel="preload" href="images/house.png" as="image">
+    <link rel="apple-touch-icon icon" href="images/house.png">
 </head>
 <body>
 <canvas id="canvas-field"></canvas>
@@ -30,14 +30,17 @@
 <script src="js/painter.js"></script>
 <script src="js/field.js"></script>
 
-<script>
-    setTimeout(() => {
-        const size = getFullScreenSize();
 
-        window.gameField = new Field(gameFieldGenerator.gameMap(35, 35));
-//        window.gameField = new Field(gameFieldGenerator.gameMap(200, 200));
-        //    window.gameField.start();
-    }, 0);
+<script>
+    const size = getFullScreenSize();
+
+    window.game = {
+        gameField: new Field(gameFieldGenerator.gameMap(100, 100))
+    };
+    //    window.game.gameField.start();
 </script>
+<div id="modal"></div>
+
+<script src="js/debug.js"></script>
 </body>
 </html>

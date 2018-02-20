@@ -33,6 +33,8 @@ class Animal extends Point {
         this.target = null;
         this.previousSteps = {};
         this.collectiveMind = collectiveMind;
+        this.history = [];
+        this.historyToReproduce = null;
     }
 
     /**
@@ -69,21 +71,32 @@ class Animal extends Point {
      * @return {{}}
      */
     goTo(point, field) {
-        const move = {
-            from: {
-                y: this.y,
-                x: this.x
-            },
-            to: {
-                y: point.y,
-                x: point.x
-            }
-        };
+        let move;
+
+        if (this.historyToReproduce) {
+            move = this.historyToReproduce[this.historyNumber];
+            this.historyNumber++;
+        } else {
+            move = {
+                from: {
+                    y: this.y,
+                    x: this.x
+                },
+                to: {
+                    y: point.y,
+                    x: point.x
+                }
+            };
+        }
 
         field.get(this.y).set(this.x, type.track);
         this.x = point.x;
         this.y = point.y;
         field.get(this.y).set(this.x, type.human);
+
+        if (debugMode && !this.historyToReproduce) {
+            this.history.push(move);
+        }
 
         return move;
     }
@@ -241,5 +254,10 @@ class Animal extends Point {
 
     clearTarget() {
         this.target = null;
+    }
+
+    setHistoryToReproduce(history) {
+        this.historyToReproduce = history;
+        this.historyNumber = 0;
     }
 }

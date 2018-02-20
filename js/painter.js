@@ -9,6 +9,7 @@ class Painter {
         this.canvas = canvas;
         this.fieldMap = field;
         this.pointSize = this.calculatePointSize();
+        this.fieldReady = false;
         this.setCanvasSize();
 
         this.wallImg = new Image();
@@ -115,7 +116,7 @@ class Painter {
 
     calculatePointSize() {
         let xSize = Math.floor((window.innerHeight - this.fieldMap.fieldSize.cells) / (this.fieldMap.fieldSize.cells + 1));
-        let ySize = Math.floor((window.innerWidth - this.fieldMap.fieldSize.rows ) / (this.fieldMap.fieldSize.rows + 1));
+        let ySize = Math.floor((window.innerWidth - this.fieldMap.fieldSize.rows) / (this.fieldMap.fieldSize.rows + 1));
 
         let size = ySize > xSize ? xSize : ySize;
         if (size < 8) {
